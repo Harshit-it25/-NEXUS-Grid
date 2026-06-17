@@ -1,0 +1,6 @@
+{
+  "name": "NEXUS Grid",
+  "description": "NEXUS Grid is a decision intelligence platform for grid modernization, renewable integration, and infrastructure investment planning.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

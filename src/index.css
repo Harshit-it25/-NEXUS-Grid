@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;750&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-primary: #00236f;
+  --color-primary-container: #1e3a8a;
+  --color-secondary: #00668a;
+  --color-secondary-container: #40c2fd;
+  --color-tertiary: #4b1c00;
+  --color-tertiary-container: #6e2c00;
+  --color-surface-container: #e5eeff;
+  --color-surface-container-low: #eff4ff;
+  --color-surface-container-lowest: #ffffff;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #c5c5d3;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #757682;
+}
+
+.bento-card {
+  border: 1px solid #c5c5d3;
+  transition: all 0.2s ease;
+}
+
+.bento-card:hover {
+  border-color: #00236f;
+  background-color: #eff4ff;
+}
+
+
+
+
+
