@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { usePlanningScope } from "../PlanningScopeContext";
+import { DigitalTwinAtlas } from "./digital-twin/DigitalTwinAtlas";
+import { DigitalTwinRenewables } from "./digital-twin/DigitalTwinRenewables";
 
 interface DigitalTwinProps {
   planningMode: "NATIONAL" | "MUNICIPAL" | "RURAL";
@@ -52,7 +54,6 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
   };
 
   const getSelectedAssetSpecs = () => {
-    // Dynamic capacity multiplier helper based on Horizon selection
     const getCapacityText = (base: number, unit = "MW") => {
       if (scopeType === "Horizon") {
         let multiplier = 1.0;
@@ -70,7 +71,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
           type: "Solar Photovoltaic Park",
           capacity: getCapacityText(2245, "MW"),
           utilization: "24.5% (observed solar CUF)",
-          risk: scopeType === "Horizon" && selectedHorizon === 2055 ? "NOMINAL" : "INTERMITTENT",
+          risk: scopeType === "Horizon" && selectedHorizon === 2050 ? "NOMINAL" : "INTERMITTENT",
           desc: "Located in Jodhpur District, Rajasthan, this is one of the largest solar parks in the world. High-density solar tracking grids require advanced reactive power support.",
           image: "https://images.unsplash.com/photo-1509391366360-2e959784a276?auto=format&fit=crop&w=600&q=80",
           source: "Ministry of New and Renewable Energy (MNRE)",
@@ -263,9 +264,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
     }
   };
 
-  // Dynamic values based on year travel to simulate planning engine
   const getDynamicRenewable = () => {
-    // scale from baseline depending on planning mode
     const base = planningMode === "RURAL" ? 79 : planningMode === "MUNICIPAL" ? 41 : 54;
     const ratio = (year - 2025) / (2050 - 2025);
     return Math.min(100, Math.round(base + ratio * (100 - base) * 0.7));
@@ -284,7 +283,6 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
     }, 1200);
   };
 
-  // Helper dynamic content matching PLANNING MODES (KPIs, locations, recommendations)
   const getModeSpecificData = () => {
     switch (planningMode) {
       case "MUNICIPAL":
@@ -392,7 +390,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
           { id: "loc-east-2", name: "Ranchi Smart Terminal Corridor", type: "Battery Storage", zone: "Jharkhand Energy Buffer", coordinates: "top-[48%] left-[62%]", status: "CHARGING", value: "800 MWh" },
           { id: "loc-east-3", name: "Jamshedpur Heavy-Metallurgy Exchange", type: "Connection Point", zone: "Jamshedpur Industrial Loop", coordinates: "top-[44%] left-[68%]", status: "CONGESTED", value: "1600 MVA" },
         ];
-      } else { // Central
+      } else {
         return [
           { id: "loc-central-1", name: "Bhopal Central Grid Exchange", type: "Solar Farm", zone: "MP Central Grid Hub", coordinates: "top-[50%] left-[48%]", status: "ACTIVE", value: "1100 MVA" },
           { id: "loc-central-2", name: "Jabalpur Trunk Inter-tie Bus", type: "Battery Storage", zone: "MP Intertie Corridor", coordinates: "top-[46%] left-[52%]", status: "STANDBY", value: "1200 MVA" },
@@ -410,13 +408,57 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
     return baseLocations;
   };
 
+  const getScaledValText = (item: any) => {
+    if (scopeType === "Horizon") {
+      let scale = 1.0;
+      if (selectedHorizon === 2030) scale = 1.15;
+      else if (selectedHorizon === 2040) scale = 1.60;
+      else if (selectedHorizon === 2050) scale = 2.45;
+      return `${Math.round(item.baseVal * scale).toLocaleString()} ${item.unit}`;
+    }
+    return `${item.baseVal.toLocaleString()} ${item.unit}`;
+  };
+
+  const assetList = [
+    { id: "dt-muppandal", name: "Muppandal Wind Farm", type: "windFarms", region: "South", top: "18%", left: "50%", icon: "toys", color: "bg-blue-600", baseVal: 1500, unit: "MW", desc: "Tamil Nadu wind pass corridor feeds south heavy industry grids." },
+    { id: "dt-bhadla", name: "Bhadla Solar Park", type: "solarArrays", region: "West", top: "28%", left: "26%", icon: "sunny", color: "bg-amber-500", baseVal: 2245, unit: "MW", desc: "Rajasthan Thar Desert solar array, prone to dispatch congestion." },
+    { id: "dt-pavagada", name: "Pavagada Solar Park", type: "solarArrays", region: "South", top: "72%", left: "45%", icon: "sunny", color: "bg-amber-500", baseVal: 2050, unit: "MW", desc: "Tumkur Karnataka high-density clean solar injection point." },
+    { id: "dt-delhi", name: "Delhi NCR Transmission Hub", type: "transmissionLines", region: "North", top: "36%", left: "42%", icon: "bolt", color: "bg-orange-600", baseVal: 2000, unit: "MVA", desc: "Main Stepdown 765kV bus terminal allocating northern metropolitan load." },
+    { id: "dt-mumbai", name: "Mumbai West GIS", type: "transmissionLines", region: "West", top: "54%", left: "64%", icon: "electric_substation", color: "bg-orange-400", baseVal: 1200, unit: "MVA", desc: "Gas-Insulated substation routing underwater western grids to metropolitan Mumbai." },
+    { id: "dt-kutch", name: "Kutch Renewable Energy Zone", type: "energyStorage", region: "West", top: "58%", left: "56%", icon: "battery_charging_full", color: "bg-emerald-500", baseVal: 1500, unit: "MW Hybrid", desc: "Gujarat hybrid solar-wind generation coupled with utility-scale battery banks." },
+    { id: "dt-tehri", name: "Tehri Hydro Plant", type: "hydro", region: "North", top: "22%", left: "38%", icon: "water_drop", color: "bg-sky-600", baseVal: 1000, unit: "MW Peaking", desc: "Uttarakhand high-head gravity pumped-storage reservoir." },
+    { id: "dt-koyna", name: "Koyna Hydro Plant", type: "hydro", region: "West", top: "64%", left: "30%", icon: "water_drop", color: "bg-sky-600", baseVal: 1960, unit: "MW", desc: "Underground water caverns regulate sudden western industrial load swings." },
+    { id: "dt-bhubaneswar", name: "Bhubaneswar Coastal Grid Aggregator", type: "transmissionLines", region: "East", top: "60%", left: "70%", icon: "electric_substation", color: "bg-indigo-500", baseVal: 1400, unit: "MVA", desc: "Coordinating inter-regional HVDC flows with coastal marine wind grids." },
+    { id: "dt-ranchi", name: "Ranchi Smart Terminal Corridor", type: "energyStorage", region: "East", top: "48%", left: "62%", icon: "battery_charging_full", color: "bg-emerald-400", baseVal: 800, unit: "MWh", desc: "Ensuring energy buffer stability for deep coalbelt steel-foundry hubs." },
+    { id: "dt-bhopal", name: "Bhopal Central Grid Exchange", type: "transmissionLines", region: "Central", top: "50%", left: "48%", icon: "bolt", color: "bg-pink-600", baseVal: 1100, unit: "MVA", desc: "Central regional bus coupling cross-national solar ties." },
+    { id: "dt-jabalpur", name: "Jabalpur Trunk Inter-tie Bus", type: "transmissionLines", region: "Central", top: "46%", left: "52%", icon: "circle", color: "bg-pink-400", baseVal: 1200, unit: "MVA", desc: "Inter-regional loop feeder decoupling North-South transit sags." }
+  ];
+
+  if (scopeType === "Horizon") {
+    if (selectedHorizon >= 2040) {
+      assetList.push({ id: "dt-hydrogen", name: "Kutch Green Hydrogen Fusion Bus", type: "energyStorage", region: "West", top: "52%", left: "18%", icon: "cyclone", color: "bg-fuchsia-500 animate-bounce", baseVal: 3500, unit: "MW Peaking", desc: "Futuristic 2040 high-density green hydrogen electrolysis cell array with localized gas turbine feeds." });
+    }
+    if (selectedHorizon >= 2050) {
+      assetList.push({ id: "dt-fusion", name: "Arunachal Fusion Energy Prototype", type: "windFarms", region: "East", top: "30%", left: "82%", icon: "grain", color: "bg-violet-600 animate-pulse", baseVal: 6000, unit: "MW Constant", desc: "Next-gen clean stellarator fusion cluster injecting dispatch power straight to East national lines." });
+    }
+  }
+
+  const visibleAssets = assetList.filter((a) => {
+    if (scopeType === "Region" && a.region !== selectedRegion) return false;
+    if (a.type === "windFarms" && !layers.windFarms) return false;
+    if (a.type === "solarArrays" && !layers.solarArrays) return false;
+    if (a.type === "transmissionLines" && !layers.transmissionLines) return false;
+    if (a.type === "energyStorage" && !layers.energyStorage) return false;
+    return true;
+  });
+
   return (
     <div className="relative flex-1 bg-[#F8FAFC] h-[calc(100vh-3.5rem)] flex overflow-hidden select-text border-t border-[#E2E8F0]">
       
       {/* 1. GIS Map Content Viewport */}
       <div className="flex-1 relative bg-slate-100 overflow-hidden select-none border-r border-[#E2E8F0]">
         
-        {/* RENEWABLE INTEGRATION PROBLEM OVERLAY (First Visible Asset - SCI-05 Challenge) */}
+        {/* Active Critical Bottleneck Overlay */}
         <div className="absolute top-4 right-4 z-30 max-w-sm bg-[#881337] border-2 border-red-500 shadow-2xl rounded-xl p-5 text-white animate-pulse">
           <div className="flex items-center gap-2 mb-2 pb-2 border-b border-rose-800">
             <span className="material-symbols-outlined text-rose-300 font-extrabold animate-ping">error</span>
@@ -455,385 +497,48 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
             <span className="text-[11px] font-black text-slate-800 block">
               Western Renewable Corridor
             </span>
-            <p className="text-[9.5px] text-slate-500 leading-normal font-medium">
+            <p className="text-[9.5px] text-slate-550 leading-normal font-medium">
               Expanding step-down dual HVDC bus link immediately unblocks curtailed capacity, yielding 12.5% ROI.
             </p>
           </div>
         </div>
         
-        {/* Fullscreen Map Backdrop */}
-        <div 
-          className="absolute inset-0 z-0 transition-transform duration-500 origin-center flex items-center justify-center pointer-events-none"
-          style={{ transform: `scale(${zoom / 100})` }}
-        >
-          <img 
-            alt="GIS interface showing energy grid infrastructure map" 
-            className="w-full h-full object-cover opacity-80 transition-all duration-750" 
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFA_jX64hiBKi8CuyNmcM-tKSSttLvHNtpxVeo3UC2OL1bb8q7NTC1Gfx9okp4xqd1yq5EYr5vI4jF2b0rlvG7ytOYTfVwd5FzXoDhlEgkNCXrDVsUPGnq5kbUSvr4jEbQxM_qTqS6nHMl724OxdMpSf5irz8KxyCKNE5AUgGzdKLW3YbgW85Hx69-_nCNhAMmemEmsNAKU_9B3tuYTtqsqzNwFK1Ut1IjQ8bsVdqqHhpaW1NBSrDnFuE3S1S9n5m4l_e2IL-N_6jV"
-            referrerPolicy="no-referrer"
+        {/* Subtab Dynamic Workspace Render */}
+        {subTab === "ATLAS" ? (
+          <DigitalTwinAtlas
+            layers={layers}
+            setLayers={setLayers}
+            scopeType={scopeType}
+            selectedRegion={selectedRegion}
+            selectedHorizon={selectedHorizon}
+            zoom={zoom}
+            setZoom={setZoom}
+            year={year}
+            setYear={setYear}
+            twinMode={twinMode}
+            selectedAsset={selectedAsset}
+            setSelectedAsset={setSelectedAsset}
+            setIsDetailOpen={setIsDetailOpen}
+            planningMode={planningMode}
+            getDynamicHealth={getDynamicHealth}
+            getDynamicRenewable={getDynamicRenewable}
+            getSelectedAssetSpecs={getSelectedAssetSpecs}
+            getScaledValText={getScaledValText}
+            visibleAssets={visibleAssets}
           />
-        </div>
-
-        {/* Dynamic Map Nodes depending on GIS Atlas versus RENEWABLE Subtab */}
-        <div className="absolute inset-0 z-10 pointer-events-none">
-          {subTab === "ATLAS" ? (
-            // standard layers with precise vector controls
-            <>
-              {layers.renewableBottlenecks && (
-                <>
-                  {/* Western Solar Curtailment risk hotspot */}
-                  <div className="absolute top-[28%] left-[26%] -translate-y-24 z-30 pointer-events-auto bg-[#881337]/95 text-white border border-[#E11D48] p-2.5 rounded-lg shadow-xl text-[10px] max-w-[170px] select-text">
-                    <div className="flex items-center gap-1 font-black text-[#FDA4AF]">
-                      <span className="material-symbols-outlined text-[12px] animate-ping font-black">report</span>
-                      <span>Solar Curtailment Risk</span>
-                    </div>
-                    <p className="text-[9px] text-[#FECDD3] mt-1 leading-normal font-sans font-medium">
-                      Generation exceeds link capacity by <span className="font-bold text-white">280 MW</span> during mid-day peak. High voltage violation risk.
-                    </p>
-                  </div>
-                  
-                  {/* Transmission bottleneck hotspot at S-14 */}
-                  <div className="absolute top-[36%] left-[42%] translate-x-8 -translate-y-16 z-30 pointer-events-auto bg-[#881337]/95 text-white border border-[#E11D48] p-2.5 rounded-lg shadow-xl text-[10px] max-w-[170px] select-text">
-                    <div className="flex items-center gap-1 font-black text-[#FDA4AF]">
-                      <span className="material-symbols-outlined text-[12px] text-[#FB7185]">bolt</span>
-                      <span>Grid capacity Mismatch</span>
-                    </div>
-                    <p className="text-[9px] text-[#FECDD3] mt-1 leading-normal font-sans font-medium">
-                      Delhi Corridor Corridor S-14 is at <span className="font-bold text-white">84.5%</span> capacity ceiling. Transmission congestion active.
-                    </p>
-                  </div>
-                </>
-              )}
-
-              {/* Dynamic Context-Aware Infrastructure Assets */}
-              {(() => {
-                // Static coordinates mapping
-                const assetList = [
-                  { 
-                    id: "dt-muppandal",
-                    name: "Muppandal Wind Farm", 
-                    type: "windFarms", 
-                    region: "South", 
-                    top: "18%", 
-                    left: "50%", 
-                    icon: "toys", 
-                    color: "bg-blue-600", 
-                    baseVal: 1500, 
-                    unit: "MW",
-                    desc: "Tamil Nadu wind pass corridor feeds south heavy industry grids."
-                  },
-                  { 
-                    id: "dt-bhadla",
-                    name: "Bhadla Solar Park", 
-                    type: "solarArrays", 
-                    region: "West", 
-                    top: "28%", 
-                    left: "26%", 
-                    icon: "sunny", 
-                    color: "bg-amber-500", 
-                    baseVal: 2245, 
-                    unit: "MW",
-                    desc: "Rajasthan Thar Desert solar array, prone to dispatch congestion."
-                  },
-                  { 
-                    id: "dt-pavagada",
-                    name: "Pavagada Solar Park", 
-                    type: "solarArrays", 
-                    region: "South", 
-                    top: "72%", 
-                    left: "45%", 
-                    icon: "sunny", 
-                    color: "bg-amber-500", 
-                    baseVal: 2050, 
-                    unit: "MW",
-                    desc: "Tumkur Karnataka high-density clean solar injection point."
-                  },
-                  { 
-                    id: "dt-delhi",
-                    name: "Delhi NCR Transmission Hub", 
-                    type: "transmissionLines", 
-                    region: "North", 
-                    top: "36%", 
-                    left: "42%", 
-                    icon: "bolt", 
-                    color: "bg-orange-600", 
-                    baseVal: 2000, 
-                    unit: "MVA",
-                    desc: "Main Stepdown 765kV bus terminal allocating northern metropolitan load."
-                  },
-                  { 
-                    id: "dt-mumbai",
-                    name: "Mumbai West GIS", 
-                    type: "transmissionLines", 
-                    region: "West", 
-                    top: "54%", 
-                    left: "64%", 
-                    icon: "electric_substation", 
-                    color: "bg-orange-400", 
-                    baseVal: 1200, 
-                    unit: "MVA",
-                    desc: "Gas-Insulated substation routing underwater western grids to metropolitan Mumbai."
-                  },
-                  { 
-                    id: "dt-kutch",
-                    name: "Kutch Renewable Energy Zone", 
-                    type: "energyStorage", 
-                    region: "West", 
-                    top: "58%", 
-                    left: "56%", 
-                    icon: "battery_charging_full", 
-                    color: "bg-emerald-500", 
-                    baseVal: 1500, 
-                    unit: "MW Hybrid",
-                    desc: "Gujarat hybrid solar-wind generation coupled with utility-scale battery banks."
-                  },
-                  { 
-                    id: "dt-tehri",
-                    name: "Tehri Hydro Plant", 
-                    type: "hydro", 
-                    region: "North", 
-                    top: "22%", 
-                    left: "38%", 
-                    icon: "water_drop", 
-                    color: "bg-sky-600", 
-                    baseVal: 1000, 
-                    unit: "MW Peaking",
-                    desc: "Uttarakhand high-head gravity pumped-storage reservoir."
-                  },
-                  { 
-                    id: "dt-koyna",
-                    name: "Koyna Hydro Plant", 
-                    type: "hydro", 
-                    region: "West", 
-                    top: "64%", 
-                    left: "30%", 
-                    icon: "water_drop", 
-                    color: "bg-sky-600", 
-                    baseVal: 1960, 
-                    unit: "MW",
-                    desc: "Underground water caverns regulate sudden western industrial load swings."
-                  },
-                  // East Region additions so secondary select handles East beautifully
-                  {
-                    id: "dt-bhubaneswar",
-                    name: "Bhubaneswar Coastal Grid Aggregator",
-                    type: "transmissionLines",
-                    region: "East",
-                    top: "60%",
-                    left: "70%",
-                    icon: "electric_substation",
-                    color: "bg-indigo-500",
-                    baseVal: 1400,
-                    unit: "MVA",
-                    desc: "Coordinating inter-regional HVDC flows with coastal marine wind grids."
-                  },
-                  {
-                    id: "dt-ranchi",
-                    name: "Ranchi Smart Terminal Corridor",
-                    type: "energyStorage",
-                    region: "East",
-                    top: "48%",
-                    left: "62%",
-                    icon: "battery_charging_full",
-                    color: "bg-emerald-400",
-                    baseVal: 800,
-                    unit: "MWh",
-                    desc: "Ensuring energy buffer stability for deep coalbelt steel-foundry hubs."
-                  },
-                  // Central Region additions
-                  {
-                    id: "dt-bhopal",
-                    name: "Bhopal Central Grid Exchange",
-                    type: "transmissionLines",
-                    region: "Central",
-                    top: "50%",
-                    left: "48%",
-                    icon: "bolt",
-                    color: "bg-pink-600",
-                    baseVal: 1100,
-                    unit: "MVA",
-                    desc: "Central regional bus coupling cross-national solar ties."
-                  },
-                  {
-                    id: "dt-jabalpur",
-                    name: "Jabalpur Trunk Inter-tie Bus",
-                    type: "transmissionLines",
-                    region: "Central",
-                    top: "46%",
-                    left: "52%",
-                    icon: "circle",
-                    color: "bg-pink-400",
-                    baseVal: 1200,
-                    unit: "MVA",
-                    desc: "Inter-regional loop feeder decoupling North-South transit surges."
-                  }
-                ];
-
-                // Add FUTURISTIC assets dynamically based on year in Horizon mode
-                if (scopeType === "Horizon") {
-                  if (selectedHorizon >= 2040) {
-                    assetList.push({
-                      id: "dt-hydrogen",
-                      name: "Kutch Green Hydrogen Fusion Bus",
-                      type: "energyStorage",
-                      region: "West",
-                      top: "52%",
-                      left: "18%",
-                      icon: "cyclone",
-                      color: "bg-fuchsia-500 animate-bounce",
-                      baseVal: 3500,
-                      unit: "MW Peaking",
-                      desc: "Futuristic 2040 high-density green hydrogen electrolysis cell array with localized gas turbine feeds."
-                    });
-                  }
-                  if (selectedHorizon >= 2050) {
-                    assetList.push({
-                      id: "dt-fusion",
-                      name: "Arunachal Fusion Energy Prototype",
-                      type: "windFarms", // generic layer mapping
-                      region: "East",
-                      top: "30%",
-                      left: "82%",
-                      icon: "grain",
-                      color: "bg-violet-600 animate-pulse",
-                      baseVal: 6000,
-                      unit: "MW Constant",
-                      desc: "Next-gen clean stellarator fusion cluster injecting dispatch power straight to East national lines."
-                    });
-                  }
-                }
-
-                // Filter based on selected scope
-                const visibleAssets = assetList.filter((a) => {
-                  // If scopeType is Region, only show assets matching selectedRegion
-                  if (scopeType === "Region" && a.region !== selectedRegion) {
-                    return false;
-                  }
-                  // Filter based on layers panel selects
-                  if (a.type === "windFarms" && !layers.windFarms) return false;
-                  if (a.type === "solarArrays" && !layers.solarArrays) return false;
-                  if (a.type === "transmissionLines" && !layers.transmissionLines) return false;
-                  if (a.type === "energyStorage" && !layers.energyStorage) return false;
-                  
-                  return true;
-                });
-
-                // Calculate capacity scaling based on Horizon year
-                const getScaledValText = (item: typeof assetList[0]) => {
-                  if (scopeType === "Horizon") {
-                    let scale = 1.0;
-                    if (selectedHorizon === 2030) scale = 1.15;
-                    else if (selectedHorizon === 2040) scale = 1.60;
-                    else if (selectedHorizon === 2050) scale = 2.45;
-                    return `${Math.round(item.baseVal * scale).toLocaleString()} ${item.unit}`;
-                  }
-                  return `${item.baseVal.toLocaleString()} ${item.unit}`;
-                };
-
-                return (
-                  <>
-                    {/* SVG connection lines - only draw between visible assets */}
-                    <svg className="absolute inset-0 w-full h-full z-0 opacity-80 pointer-events-none">
-                      {layers.transmissionLines && (
-                        <>
-                          {/* We draw dynamic connection links based on which visible assets exist on the map (for spatial correlation) */}
-                          {visibleAssets.some(a => a.name === "Muppandal Wind Farm") && visibleAssets.some(a => a.name === "Delhi NCR Transmission Hub") && (
-                            <line x1="50%" y1="18%" x2="42%" y2="36%" stroke="#1e40af" strokeWidth="2.5" strokeDasharray="5" className="animate-pulse" />
-                          )}
-                          {visibleAssets.some(a => a.name === "Bhadla Solar Park") && visibleAssets.some(a => a.name === "Delhi NCR Transmission Hub") && (
-                            <line x1="26%" y1="28%" x2="42%" y2="36%" stroke="#d97706" strokeWidth="2.5" />
-                          )}
-                          {visibleAssets.some(a => a.name === "Delhi NCR Transmission Hub") && visibleAssets.some(a => a.name === "Kutch Renewable Energy Zone") && (
-                            <line x1="42%" y1="36%" x2="56%" y2="58%" stroke="#059669" strokeWidth="2" strokeDasharray="3" />
-                          )}
-                          {visibleAssets.some(a => a.name === "Delhi NCR Transmission Hub") && visibleAssets.some(a => a.name === "Mumbai West GIS") && (
-                            <line x1="42%" y1="36%" x2="64%" y2="54%" stroke="#ea580c" strokeWidth="2.5" />
-                          )}
-                          {visibleAssets.some(a => a.name === "Mumbai West GIS") && visibleAssets.some(a => a.name === "Pavagada Solar Park") && (
-                            <line x1="64%" y1="54%" x2="45%" y2="72%" stroke="#64748b" strokeWidth="1.5" />
-                          )}
-                          {/* Bhopal to Jabalpur central tie */}
-                          {visibleAssets.some(a => a.name === "Bhopal Central Grid Exchange") && visibleAssets.some(a => a.name === "Jabalpur Trunk Inter-tie Bus") && (
-                            <line x1="48%" y1="50%" x2="52%" y2="46%" stroke="#b81d24" strokeWidth="3" />
-                          )}
-                          {/* Bhubaneswar to Ranchi coastal tie */}
-                          {visibleAssets.some(a => a.name === "Bhubaneswar Coastal Grid Aggregator") && visibleAssets.some(a => a.name === "Ranchi Smart Terminal Corridor") && (
-                            <line x1="70%" y1="60%" x2="62%" y2="48%" stroke="#4f46e5" strokeWidth="2" />
-                          )}
-                        </>
-                      )}
-                    </svg>
-
-                    {/* Nodes elements */}
-                    {visibleAssets.map((item) => {
-                      const isSelected = selectedAsset === item.name;
-                      return (
-                        <div 
-                          key={item.id}
-                          onClick={() => { setSelectedAsset(item.name); setIsDetailOpen(true); }}
-                          style={{ top: item.top, left: item.left }}
-                          className={`absolute w-6-5 h-6-5 p-1 rounded-full border-2 border-white shadow-xl pointer-events-auto cursor-pointer flex items-center justify-center transition-all ${item.color} ${
-                            isSelected ? "ring-4 ring-offset-2 ring-indigo-600 scale-120 z-40" : "scale-100 z-20 hover:scale-115"
-                          }`}
-                          title={item.name}
-                        >
-                          <span className="material-symbols-outlined text-[13px] text-white font-bold select-none">{item.icon}</span>
-                          <span className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white border border-slate-700 shadow-lg text-[9px] font-black px-2 py-0.5 rounded whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 uppercase tracking-wide">
-                            {item.name} ({getScaledValText(item)})
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </>
-                );
-              })()}
-            </>
-          ) : (
-            // Renewable Integration Planner layers with custom grid toggle respects
-            <>
-              {getDynamicLocations().filter((loc) => {
-                if (loc.type === "Solar Farm" && !layers.solarArrays) return false;
-                if (loc.type === "Battery Storage" && !layers.energyStorage) return false;
-                if (loc.type === "Connection Point" && !layers.transmissionLines) return false;
-                return true;
-              }).map((loc) => {
-                const isSolar = loc.type === "Solar Farm";
-                const isBattery = loc.type === "Battery Storage";
-                return (
-                  <div 
-                    key={loc.id}
-                    onClick={() => { setSelectedAsset(loc.name); setIsDetailOpen(true); }}
-                    className={`absolute ${loc.coordinates} w-6 h-6 rounded-full border-2 border-white shadow-xl pointer-events-auto cursor-pointer flex items-center justify-center transition-transform hover:scale-110 group ${
-                      isSolar 
-                        ? "bg-amber-500" 
-                        : isBattery 
-                          ? "bg-emerald-500" 
-                          : "bg-red-500"
-                    }`}
-                  >
-                    <span className="material-symbols-outlined text-[12px] text-white font-black">
-                      {isSolar ? "sunny" : isBattery ? "battery_charging_full" : "warning"}
-                    </span>
-                    <span className="absolute -top-9 left-1/2 -translate-x-1/2 bg-white text-[#0F172A] border border-[#E2E8F0] shadow-sm text-[9.5px] font-black px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity z-30">
-                      {loc.name} ({loc.value})
-                    </span>
-                  </div>
-                );
-              })}
-
-              {/* Renewable Planning Vectors */}
-              <svg className="absolute inset-0 w-full h-full z-0 opacity-80">
-                {layers.transmissionLines && (
-                  <>
-                    {layers.solarArrays && <line x1="42%" y1="25%" x2="64%" y2="42%" stroke="#eab308" strokeWidth="2" strokeDasharray="4" />}
-                    {layers.energyStorage && <line x1="36%" y1="54%" x2="64%" y2="42%" stroke="#10b981" strokeWidth="3" />}
-                    <circle cx="64%" cy="42%" r="14" fill="none" stroke="#DC2626" strokeWidth="1.5" className="animate-pulse" />
-                  </>
-                )}
-              </svg>
-            </>
-          )}
-        </div>
+        ) : (
+          <DigitalTwinRenewables
+            layers={layers}
+            solarMix={solarMix}
+            setSolarMix={setSolarMix}
+            windMix={windMix}
+            setWindMix={setWindMix}
+            setSelectedAsset={setSelectedAsset}
+            setIsDetailOpen={setIsDetailOpen}
+            modeData={modeData}
+            getDynamicLocations={getDynamicLocations}
+          />
+        )}
 
         {/* GIS HUD Loading State */}
         {isSimulating && (
@@ -844,10 +549,8 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
           </div>
         )}
 
-        {/* 2. Top-Left Overlay Workspace selector tabs */}
+        {/* Top-Left Overlay Workspace selector tabs */}
         <div className="absolute top-4 left-4 flex flex-col gap-3.5 z-20">
-          
-          {/* Sub Workspace Tabs */}
           <div className="bg-white border border-[#E2E8F0] rounded-lg p-1 flex gap-1 shadow-md">
             <button 
               onClick={() => setSubTab("ATLAS")}
@@ -872,9 +575,8 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
             </button>
           </div>
 
-          {/* Digital Twin Mode Switcher */}
           <div className="bg-white border border-[#E2E8F0] rounded-lg p-3 flex flex-col gap-2 shadow-md min-w-[200px]">
-            <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 rounded text-[#0F4C81] font-black text-[9px] uppercase tracking-wide text-left">
+            <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 rounded text-[#0F4C81] font-black text-[9px] uppercase tracking-wide text-left font-mono">
               <span className="material-symbols-outlined text-[14px]">science</span> twin configuration
             </div>
             <div className="flex flex-col gap-1.5 pt-1">
@@ -911,205 +613,20 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
               </p>
             )}
           </div>
-
-          {/* Layer Selector */}
-          <div className="bg-white border border-[#E2E8F0] rounded-lg p-3 flex flex-col gap-2 shadow-md min-w-[200px]">
-            <div className="flex items-center gap-2 px-2 py-1 bg-slate-50 rounded text-[#0F4C81] font-black text-[9px] uppercase tracking-wide">
-              <span className="material-symbols-outlined text-[14px]">layers</span> Layer Vectors Control
-            </div>
-            <div className="space-y-1.5 select-none">
-              <label className="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-slate-50 transition-colors text-xs text-slate-800">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-[#3B82F6]"></span>
-                  <span className="material-symbols-outlined text-sky-600 text-[14px]">toys</span>
-                  <span className="font-semibold text-[10.5px]">Wind Farms</span>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={layers.windFarms}
-                  onChange={(e) => setLayers({ ...layers, windFarms: e.target.checked })}
-                  className="rounded text-[#0F4C81] border-slate-300 w-3 h-3 cursor-pointer" 
-                />
-              </label>
-
-              <label className="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-slate-50 transition-colors text-xs text-slate-800">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                  <span className="material-symbols-outlined text-amber-500 text-[14px]">sunny</span>
-                  <span className="font-semibold text-[10.5px]">Solar Arrays</span>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={layers.solarArrays}
-                  onChange={(e) => setLayers({ ...layers, solarArrays: e.target.checked })}
-                  className="rounded text-[#0F4C81] border-slate-300 w-3 h-3 cursor-pointer" 
-                />
-              </label>
-
-              <label className="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-slate-50 transition-colors text-xs text-slate-800">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-orange-500"></span>
-                  <span className="material-symbols-outlined text-orange-500 text-[14px]">bolt</span>
-                  <span className="font-semibold text-[10.5px]">Transmission</span>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={layers.transmissionLines}
-                  onChange={(e) => setLayers({ ...layers, transmissionLines: e.target.checked })}
-                  className="rounded text-[#0F4C81] border-slate-300 w-3 h-3 cursor-pointer" 
-                />
-              </label>
-
-              <label className="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-slate-50 transition-colors text-xs text-slate-800">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  <span className="material-symbols-outlined text-emerald-600 text-[14px]">battery_charging_full</span>
-                  <span className="font-semibold text-[10.5px]">Energy Storage</span>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={layers.energyStorage}
-                  onChange={(e) => setLayers({ ...layers, energyStorage: e.target.checked })}
-                  className="rounded text-[#0F4C81] border-slate-300 w-3 h-3 cursor-pointer" 
-                />
-              </label>
-
-              <label className="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-slate-50 transition-colors text-xs text-slate-800">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-red-500 font-black animate-pulse"></span>
-                  <span className="material-symbols-outlined text-rose-600 text-[14px]">warning_amber</span>
-                  <span className="font-extrabold text-[10.5px] text-red-750">Grid Bottlenecks</span>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={layers.renewableBottlenecks}
-                  onChange={(e) => setLayers({ ...layers, renewableBottlenecks: e.target.checked })}
-                  className="rounded text-red-600 border-slate-300 w-3 h-3 cursor-pointer" 
-                />
-              </label>
-
-              <label className="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-slate-50 transition-colors text-xs text-slate-800">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-red-500"></span>
-                  <span className="material-symbols-outlined text-red-500 text-[14px]">home</span>
-                  <span className="font-semibold text-[10.5px]">Consumer Nodes</span>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={layers.consumptionNodes}
-                  onChange={(e) => setLayers({ ...layers, consumptionNodes: e.target.checked })}
-                  className="rounded text-[#0F4C81] border-slate-300 w-3 h-3 cursor-pointer" 
-                />
-              </label>
-            </div>
-            {/* Map zoom utility mini-block */}
-            <div className="flex gap-2 border-t border-slate-100 pt-2 select-none">
-              <button 
-                onClick={() => setZoom(Math.min(150, zoom + 10))}
-                className="flex-1 text-center bg-slate-50 text-xs py-1 hover:bg-slate-100 rounded font-black cursor-pointer text-slate-700"
-              >
-                +
-              </button>
-              <button 
-                onClick={() => setZoom(Math.max(70, zoom - 10))}
-                className="flex-1 text-center bg-slate-50 text-xs py-1 hover:bg-slate-100 rounded font-black cursor-pointer text-slate-700"
-              >
-                -
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* 3. Time Travel Engine Slider Overlay */}
-        <div className="absolute bottom-24 left-6 right-6 z-20">
-          <div className="bg-white/95 backdrop-blur-md border border-[#E2E8F0] rounded-lg p-4 shadow-xl max-w-2xl mx-auto">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-1.5 text-slate-800">
-                <span className="material-symbols-outlined text-[#0F4C81]">history_toggle_off</span>
-                <span className="text-[11px] uppercase tracking-widest font-black text-slate-500">
-                  {twinMode === "REAL_INFRASTRUCTURE" ? "Strategy Timeline (Locked - Real Data)" : "Strategy Timeline (Planning Simulation)"}
-                </span>
-              </div>
-              <div className={`font-mono text-3xl font-black ${twinMode === "REAL_INFRASTRUCTURE" ? "text-slate-400" : "text-[#0F4C81]"}`}>
-                {year}
-              </div>
-            </div>
-            
-            <div className="relative w-full h-8 flex items-center">
-              <div className="absolute inset-0 flex justify-between px-1 pointer-events-none">
-                <span className="text-[9px] text-[#64748B] font-bold mt-5">2025</span>
-                <span className="text-[9px] text-[#64748B] font-bold mt-5">2030</span>
-                <span className="text-[9px] text-[#64748B] font-bold mt-5">2035</span>
-                <span className="text-[9px] text-[#64748B] font-bold mt-5">2040</span>
-                <span className="text-[9px] text-[#64748B] font-bold mt-5">2045</span>
-                <span className="text-[9px] text-[#64748B] font-bold mt-5">2050</span>
-              </div>
-              <input 
-                type="range"
-                disabled={twinMode === "REAL_INFRASTRUCTURE"}
-                min={2025}
-                max={2050}
-                step={1}
-                value={year}
-                onChange={(e) => setYear(Number(e.target.value))}
-                className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-[#0F4C81] focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed" 
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* 4. Bottom Left KPI Cards */}
-        <div className="absolute bottom-4 left-4 flex gap-3 z-10 max-w-[calc(100%-12px)] overflow-x-auto pr-4">
-          
-          <div className="bg-white p-3 rounded-lg border border-[#E2E8F0] flex flex-col gap-1 w-36 shadow-md">
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Grid Health</span>
-            <div className="flex items-end justify-between leading-none mb-1">
-              <span className="font-mono text-lg font-bold text-[#0F4C81]">{getDynamicHealth()}%</span>
-              <span className="text-[9px] text-emerald-600 font-extrabold">+1.2%</span>
-            </div>
-            <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
-              <div className="bg-[#0F4C81] h-full" style={{ width: `${getDynamicHealth()}%` }}></div>
-            </div>
-          </div>
-
-          <div className="bg-white p-3 rounded-lg border border-[#E2E8F0] flex flex-col gap-1 w-36 shadow-md">
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Renewable Integration</span>
-            <div className="flex items-end justify-between leading-none mb-1">
-              <span className="font-mono text-lg font-bold text-[#0F4C81]">{getDynamicRenewable()}%</span>
-              <span className="text-[9px] text-[#64748B] font-bold">Target 80%</span>
-            </div>
-            <div className="w-full bg-[#E2E8F0] h-1 rounded-full overflow-hidden">
-              <div className="bg-emerald-600 h-full" style={{ width: `${getDynamicRenewable()}%` }}></div>
-            </div>
-          </div>
-
-          <div className="bg-white p-3 rounded-lg border border-[#E2E8F0] flex flex-col gap-1 w-36 shadow-md">
-            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Resilience status</span>
-            <div className="flex items-end justify-between leading-none mb-1">
-              <span className="font-mono text-xs font-bold text-emerald-600">
-                {planningMode === "RURAL" ? "VOLATILE" : "REINFORCED"}
-              </span>
-              <span className="material-symbols-outlined text-emerald-600 text-[18px]">verified</span>
-            </div>
-            <div className="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
-              <div className="bg-emerald-500 h-full" style={{ width: "95%" }}></div>
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* 5. Right Sidebar Inspection Drawer (Sub-view split based on active ATLAS vs RENEWABLES tab) */}
+      {/* Right Sidebar Inspection Drawer */}
       {isDetailOpen ? (
         <aside className="w-[360px] bg-white border-l border-[#E2E8F0] flex flex-col z-20 shadow-lg transition-all h-full overflow-y-auto">
-          
           {subTab === "ATLAS" ? (
-            // standard ATLAS DETAIL PANEL
             <div className="p-5 flex-1 select-text">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-xs font-black text-[#0F4C81] uppercase tracking-wider">Infrastructure Detail</h2>
                 <button 
                   onClick={() => setIsDetailOpen(false)}
                   className="material-symbols-outlined text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
+                  aria-label="Close details panel"
                 >
                   close
                 </button>
@@ -1127,7 +644,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
                     {getSelectedAssetSpecs().type}
                   </div>
                 </div>
-                <h3 className="text-[17px] font-bold text-slate-900 leading-tight">
+                <h3 className="text-[17px] font-bold text-slate-900 leading-tight font-sans">
                   {selectedAsset}
                 </h3>
                 <p className="text-[10px] text-slate-500 mt-1 font-mono uppercase">
@@ -1162,7 +679,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
                       {getSelectedAssetSpecs().risk}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-600 leading-relaxed">
+                  <p className="text-[11px] text-slate-650 leading-relaxed font-sans">
                     {getSelectedAssetSpecs().desc}
                   </p>
                 </div>
@@ -1191,7 +708,6 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
               </div>
             </div>
           ) : (
-            // major RENEWABLE INTEGRATION PLANNER SIDEBAR
             <div className="p-5 flex-1 flex flex-col justify-between select-text">
               <div className="space-y-5">
                 <div className="flex items-center justify-between border-b pb-3 border-[#E2E8F0]">
@@ -1205,19 +721,18 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
                   <button 
                     onClick={() => setIsDetailOpen(false)}
                     className="material-symbols-outlined text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
+                    aria-label="Close renewables panel"
                   >
                     close
                   </button>
                 </div>
 
-                {/* Primary capacity specs */}
                 <div className="bg-[#F8FAFC] p-4 rounded border border-[#E2E8F0] shadow-xs space-y-3">
                   <div>
                     <div className="flex justify-between text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 mb-1">
                       <span>Renewable Capacity</span>
                       <span className="text-[#0F4C81] font-black font-mono">{modeData.capacity}</span>
                     </div>
-                    {/* Progress representation */}
                     <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
                       <div className="h-full bg-amber-500" style={{ width: "63%" }}></div>
                     </div>
@@ -1239,7 +754,6 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
                   </div>
                 </div>
 
-                {/* Renewable Integration Command Module Panel */}
                 <div className="bg-[#F8FAFC] border border-[#E2E8F0] p-4 rounded-lg shadow-xs space-y-3.5">
                   <div className="flex items-center gap-1.5 pb-2 border-b border-slate-200">
                     <span className="material-symbols-outlined text-sm text-emerald-600">energy_savings_leaf</span>
@@ -1249,7 +763,6 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
                   </div>
 
                   <div className="space-y-3 text-xs">
-                    {/* Solar control */}
                     <div className="space-y-1">
                       <div className="flex justify-between items-center text-[10px] font-mono">
                         <span className="text-slate-500 font-bold uppercase">Solar Infeed Goal</span>
@@ -1265,7 +778,6 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
                       />
                     </div>
 
-                    {/* Wind control */}
                     <div className="space-y-1">
                       <div className="flex justify-between items-center text-[10px] font-mono">
                         <span className="text-slate-500 font-bold uppercase">Wind Infeed Goal</span>
@@ -1281,7 +793,6 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
                       />
                     </div>
 
-                    {/* Cumulative active active simulation feedback */}
                     <div className="p-2.5 bg-white border border-[#E2E8F0] rounded flex justify-between items-center">
                       <div>
                         <span className="text-[8px] font-bold text-slate-400 block uppercase leading-none">TOTAL CONTROL LOAD</span>
@@ -1298,7 +809,6 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
                   </div>
                 </div>
 
-                {/* Constraint location box */}
                 <div className="bg-rose-50 border border-rose-200 p-3.5 rounded-lg">
                   <div className="flex items-center gap-1.5 text-rose-700 font-bold text-[10px] uppercase tracking-wide mb-1.5">
                     <span className="material-symbols-outlined text-[15px]">crisis_alt</span>
@@ -1306,7 +816,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
                   </div>
                   <div className="text-xs">
                     <p className="font-bold text-slate-900">Location: {modeData.constraint}</p>
-                    <p className="text-[11px] text-slate-600 mt-1 leading-normal">
+                    <p className="text-[11px] text-slate-650 mt-1 leading-normal font-sans">
                       High capacity lines throttling. Sourcing surplus wind/solar backflow triggers safety isolation flags.
                     </p>
                     <div className="mt-2 text-[10px] bg-white border border-rose-100 p-1.5 rounded text-slate-800">
@@ -1316,13 +826,12 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
                   </div>
                 </div>
 
-                {/* Strategy suggestions list */}
                 <div className="space-y-2.5">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block px-1">
                     STRATEGY RECOMMENDATIONS
                   </span>
                   
-                  {modeData.recommendations.map((rec, idx) => (
+                  {modeData.recommendations.map((rec: any, idx: number) => (
                     <div 
                       key={idx} 
                       className="p-3 border rounded border-[#E2E8F0] bg-white flex gap-2.5 items-start text-xs shadow-xs"
@@ -1330,7 +839,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
                       <span className="material-symbols-outlined text-amber-500 text-[18px]">verified_user</span>
                       <div>
                         <span className="font-extrabold text-slate-900 block">{rec.title}</span>
-                        <span className="text-[10.5px] text-slate-550 mt-0.5 block leading-normal">{rec.detail}</span>
+                        <span className="text-[10.5px] text-slate-500 mt-0.5 block leading-normal font-sans">{rec.detail}</span>
                       </div>
                     </div>
                   ))}
@@ -1338,7 +847,7 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
               </div>
 
               <div className="pt-4 border-t border-[#E2E8F0]">
-                <div className="p-3 bg-[#eff4ff] rounded text-[10.5px] leading-relaxed text-[#0F4C81] border border-blue-100">
+                <div className="p-3 bg-[#eff4ff] rounded text-[10.5px] leading-relaxed text-[#0F4C81] border border-blue-100 font-sans">
                   <span className="font-bold uppercase block text-[9px] tracking-wide mb-0.5">ESTIMATED POLICY IMPACT</span>
                   Resolving the {modeData.constraint} capacity constraint unlocks {modeData.available} green flow, avoiding curtailment penalties.
                 </div>
@@ -1346,7 +855,6 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
             </div>
           )}
 
-          {/* Run simulation footer CTA */}
           <div className="p-4 border-t border-[#E2E8F0] bg-white sticky bottom-0">
             <button 
               onClick={handleRunSimulation}
@@ -1359,10 +867,10 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
           </div>
         </aside>
       ) : (
-        /* Re-open widget trigger */
         <button 
           onClick={() => setIsDetailOpen(true)}
           className="absolute right-4 top-4 bg-[#0F4C81] hover:bg-[#2563EB] text-white p-2.5 rounded-full shadow-lg z-20 flex hover:scale-105 active:scale-95 transition-all text-sm uppercase font-bold items-center gap-1.5"
+          aria-label="Open details panel"
         >
           <span className="material-symbols-outlined text-sm">open_in_new</span>
           <span className="text-[10px] tracking-wide pr-1">Details</span>

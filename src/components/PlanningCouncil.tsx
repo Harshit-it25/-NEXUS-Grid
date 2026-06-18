@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { INITIAL_STAKEHOLDERS } from "../data";
 import { Stakeholder } from "../types";
 import { usePlanningScope } from "../PlanningScopeContext";
+import { StakeholderDelegates } from "./planning-council/StakeholderDelegates";
+import { ConsensusStrategies } from "./planning-council/ConsensusStrategies";
 
 interface StrategyKPIAlignment {
   stakeholderId: string;
@@ -542,655 +544,402 @@ export const PlanningCouncil: React.FC = () => {
 
       <div className="flex-1 flex overflow-hidden">
         
-        {/* ========================================================
-            LEFT COLUMN: STAKEHOLDER OBJECTIVES
-            ======================================================== */}
-      <section className="w-[340px] bg-white border-r border-[#E2E8F0] flex flex-col z-10">
-        
-        {/* Column Header */}
-        <div className="p-4 border-b border-[#E2E8F0] bg-slate-50 flex justify-between items-center">
-          <div>
-            <h3 className="text-xs font-black uppercase text-[#0F4C81] tracking-wider">BOARD MEMBERS</h3>
-            <p className="text-[10px] text-slate-500 mt-0.5 uppercase">STAKEHOLDER OBJECTIVES</p>
-          </div>
-          <span className="text-[9px] font-mono font-black bg-slate-200 text-[#475569] px-1.5 py-0.5 rounded">
-            {stakeholders.length} SEATS
-          </span>
-        </div>
+        {/* Modular Left Column */}
+        <StakeholderDelegates
+          stakeholders={stakeholders}
+          selectedStakeholder={selectedStakeholder}
+          setSelectedStakeholder={setSelectedStakeholder}
+          getBoardroomAids={getBoardroomAids}
+        />
 
-        {/* Members Cards Stack List */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3.5 select-text">
-          {stakeholders.map((stk) => {
-            const isSelected = selectedStakeholder?.id === stk.id;
-            const aids = getBoardroomAids(stk.role || stk.name);
-            const isCriticalDisagreement = stk.tradeoffScore < 45;
+        {/* MIDDLE COLUMN: NEGOTIATION WORKSPACE (flex-1) */}
+        <section className="flex-1 overflow-y-auto p-6 relative flex flex-col justify-between">
+          <div className="absolute inset-0 pointer-events-none opacity-[0.02] bg-[radial-gradient(#0F4C81_1px,transparent_1px)] [background-size:20px_20px] z-0"></div>
 
-            return (
-              <div 
-                key={stk.id}
-                onClick={() => setSelectedStakeholder(stk)}
-                className={`p-3.5 rounded-lg border transition-all cursor-pointer relative ${
-                  isSelected 
-                    ? "border-[#0F4C81] bg-[#eff4ff] ring-2 ring-blue-100" 
-                    : "border-[#E2E8F0] bg-white hover:border-[#0F4C81]"
-                }`}
-              >
-                {/* Header info */}
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className={`w-2.5 h-2.5 rounded-full ${stk.colorClass === "text-emerald-500" ? "bg-emerald-500" : stk.colorClass === "text-red-500" ? "bg-red-500" : "bg-sky-500"}`}></span>
-                    <span className="font-extrabold text-xs text-[#0F172A] truncate max-w-[130px]">{stk.name}</span>
-                  </div>
-                  <span className="font-mono text-[9px] font-black text-[#0F4C81]">{stk.role}</span>
-                </div>
-
-                {/* Condensed Core Objective */}
-                <p className="text-[11px] text-slate-600 leading-tight">
-                  "{stk.objective}"
-                </p>
-
-                {/* Priority Score and Conflict tags indicators */}
-                <div className="mt-3.5 pt-2.5 border-t border-[#E2E8F0] flex items-center justify-between">
-                  <div className="flex gap-1 items-center">
-                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-wide">priority:</span>
-                    <span className="font-mono text-[9.5px] font-black text-slate-800">{aids.priorityScore}</span>
-                  </div>
-                  
-                  {isCriticalDisagreement ? (
-                    <span className="px-1.5 py-0.5 bg-red-50 text-red-800 text-[8.5px] font-black rounded tracking-wide border border-red-100 uppercase">
-                      CONFLICTING
-                    </span>
-                  ) : (
-                    <span className="px-1 py-0.5 bg-emerald-50 text-emerald-800 text-[8.5px] font-black rounded border border-emerald-100 uppercase">
-                      ALIGNED
-                    </span>
-                  )}
-                </div>
+          {/* Content Wrap */}
+          <div className="space-y-6 relative z-10">
+            
+            <div className="flex justify-between items-center border-b border-[#E2E8F0] pb-3">
+              <div>
+                <span className="px-2 py-0.5 bg-[#0F4C81] text-white text-[9px] font-black uppercase tracking-wider rounded">
+                  NEGOTIATION COMPROMISE HUD
+                </span>
+                <p className="text-slate-500 text-[10.5px] mt-1">Calibrate trade-offs and evaluate policy alignments on the core grid registry.</p>
               </div>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* ========================================================
-          CENTER COLUMN: NEGOTIATION WORKSPACE (flex-1)
-          ======================================================== */}
-      <section className="flex-1 overflow-y-auto p-6 relative flex flex-col justify-between">
-        <div className="absolute inset-0 pointer-events-none opacity-[0.02] bg-[radial-gradient(#0F4C81_1px,transparent_1px)] [background-size:20px_20px] z-0"></div>
-
-        {/* Content Wrap */}
-        <div className="space-y-6 relative z-10">
-          
-          <div className="flex justify-between items-center border-b border-[#E2E8F0] pb-3">
-            <div>
-              <span className="px-2 py-0.5 bg-[#0F4C81] text-white text-[9px] font-black uppercase tracking-wider rounded">
-                NEGOTIATION COMPROMISE HUD
-              </span>
-              <p className="text-slate-500 text-[10.5px] mt-1">Calibrate trade-offs and evaluate policy alignments on the core grid registry.</p>
+              <span className="font-mono text-[10px] text-slate-400 font-bold">BOARDROOM SECURE</span>
             </div>
-            <span className="font-mono text-[10px] text-slate-400 font-bold">BOARDROOM SECURE</span>
-          </div>
 
-          {selectedStakeholder ? (
-            <div className="space-y-5">
-              
-              {/* Member card */}
-              <div className="bg-white border border-[#E2E8F0] p-5 rounded-lg shadow-xs">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white bg-slate-200 ${selectedStakeholder.colorClass === "text-emerald-500" ? "!bg-emerald-500" : selectedStakeholder.colorClass === "text-red-500" ? "!bg-red-500" : "!bg-[#0F4C81]"}`}>
-                    <span className="material-symbols-outlined">{selectedStakeholder.icon}</span>
-                  </div>
-                  <div>
-                    <h4 className="text-base font-black text-[#0F172A] leading-none">{selectedStakeholder.name}</h4>
-                    <p className="text-xs text-[#0F4C81] font-bold mt-1 uppercase">{selectedStakeholder.role}</p>
-                  </div>
-                </div>
-
-                {/* Sub details boxes of objectives, recommendations and evidence */}
-                <div className="space-y-4">
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Objectives & Recommendations */}
-                    <div className="p-3.5 bg-slate-50 border border-[#E2E8F0] rounded">
-                      <span className="text-[8.5px] font-bold text-slate-400 uppercase tracking-wider block mb-1">STAKEHOLDER POLICY ACTION REQ</span>
-                      <p className="text-xs font-semibold text-slate-700 leading-relaxed">
-                        {getBoardroomAids(selectedStakeholder.role || selectedStakeholder.name).recommendation}
-                      </p>
+            {selectedStakeholder ? (
+              <div className="space-y-5">
+                
+                {/* Member card */}
+                <div className="bg-white border border-[#E2E8F0] p-5 rounded-lg shadow-xs">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white bg-slate-200 ${selectedStakeholder.colorClass === "text-emerald-500" ? "!bg-emerald-500" : selectedStakeholder.colorClass === "text-red-500" ? "!bg-red-500" : "!bg-[#0F4C81]"}`}>
+                      <span className="material-symbols-outlined">{selectedStakeholder.icon}</span>
                     </div>
-
-                    {/* Supporting Evidence */}
-                    <div className="p-3.5 bg-slate-50 border border-[#E2E8F0] rounded">
-                      <span className="text-[8.5px] font-bold text-[#0F4C81] uppercase tracking-wider block mb-1">VALIDATING DATA EVIDENCE</span>
-                      <p className="text-xs font-semibold text-slate-700 leading-relaxed">
-                        {getBoardroomAids(selectedStakeholder.role || selectedStakeholder.name).evidence}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Active Conflicts display */}
-                  <div className="p-4 bg-rose-50 border border-rose-100 rounded-md flex gap-3 items-start">
-                    <span className="material-symbols-outlined text-rose-600 text-lg mt-0.5">gpp_maybe</span>
                     <div>
-                      <span className="text-[9px] font-bold text-rose-700 uppercase tracking-wide block">ACTIVE BOARDROOM DISAGREEMENT</span>
-                      <p className="text-xs font-semibold text-slate-800 mt-1 leading-relaxed">
-                        {getBoardroomAids(selectedStakeholder.role || selectedStakeholder.name).disagreement}
-                      </p>
+                      <h4 className="text-base font-black text-[#0F172A] leading-none">{selectedStakeholder.name}</h4>
+                      <p className="text-xs text-[#0F4C81] font-bold mt-1 uppercase">{selectedStakeholder.role}</p>
                     </div>
                   </div>
 
-                </div>
-              </div>
-
-              {/* REGIONAL DISAGREEMENT GEOGRAPHIC HEATMAP */}
-              <div id="regional-consensus-map" className="bg-white border border-[#E2E8F0] p-6 rounded-xl shadow-sm space-y-4">
-                <div>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-rose-50 border border-rose-100 text-rose-800 rounded font-black text-[9px] uppercase tracking-wide">
-                    <span className="material-symbols-outlined text-[10px]">map</span>
-                    Geographic Discordance Index
-                  </span>
-                  <h4 className="text-sm font-black text-[#0F172A] uppercase tracking-wider mt-1">Regional Stakeholder Conflict Map</h4>
-                  <p className="text-[10px] text-slate-500 uppercase mt-0.5 font-semibold">Active divergence mapping between Govt, Finance, and Local Community objectives.</p>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
-                  {/* Dynamic Visual interactive Map layout (left side grid: 6 cols) */}
-                  <div className="lg:col-span-6 relative bg-slate-50 border border-slate-200 rounded-lg p-4 flex flex-col justify-center items-center overflow-hidden min-h-[220px]">
-                    <div className="absolute top-2 left-2 text-[8px] font-bold text-slate-450 font-mono tracking-widest uppercase">GEOGRAPHIC GIS GRID SECTORS</div>
+                  {/* Sub details boxes of objectives, recommendations and evidence */}
+                  <div className="space-y-4">
                     
-                    {/* SVG rendering the abstract regions with colors reflecting conflict levels */}
-                    <svg className="w-full max-w-[200px] h-auto aspect-square py-2" viewBox="0 0 100 100" fill="none">
-                      {/* N Region: Metropolitan Grid */}
-                      <path 
-                        d="M20,20 Q50,10 80,20 L75,50 Q50,45 25,50 Z" 
-                        fill={getRegionalConflictColor("METRO_NORTH")} 
-                        stroke="#475569" 
-                        strokeWidth="1.2" 
-                        className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-                      />
-                      {/* W Region: Western Solar Desert */}
-                      <path 
-                        d="M20,20 L25,50 Q45,55 50,85 L15,80 Z" 
-                        fill={getRegionalConflictColor("DESERT_WEST")} 
-                        stroke="#475569" 
-                        strokeWidth="1.2" 
-                        className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-                      />
-                      {/* S Region: Coastal Offshore Wind */}
-                      <path 
-                        d="M25,50 Q50,45 75,50 L80,80 Q50,90 50,85 Z" 
-                        fill={getRegionalConflictColor("COASTAL_SOUTH")} 
-                        stroke="#475569" 
-                        strokeWidth="1.2" 
-                        className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-                      />
-                      {/* Central / East Region */}
-                      <polygon 
-                        points="25,50 50,45 75,50 50,85" 
-                        fill={getRegionalConflictColor("RURAL_EAST")} 
-                        stroke="#475569" 
-                        strokeWidth="1.2" 
-                        className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-                      />
-                      
-                      {/* Labels overlay */}
-                      <text x="50" y="24" textAnchor="middle" fill="#0f172a" className="text-[5.5px] font-black font-sans uppercase tracking-wider select-none">NCR METRO</text>
-                      <text x="31" y="61" textAnchor="middle" fill="#0f172a" className="text-[5.5px] font-black font-sans uppercase tracking-wider select-none">WEST SUN</text>
-                      <text x="65" y="70" textAnchor="middle" fill="#0f172a" className="text-[5.5px] font-black font-sans uppercase tracking-wider select-none">COASTAL S</text>
-                      <text x="51" y="52" textAnchor="middle" fill="#0f172a" className="text-[5.5px] font-black font-sans uppercase tracking-wider select-none">EAST TIES</text>
-                    </svg>
-                  </div>
-
-                  {/* Regional detail logs & dynamic intensity calculations (right side details: 6 cols) */}
-                  <div className="lg:col-span-6 space-y-3">
-                    {Object.entries(getRegionalConflictMetrics()).map(([key, item]) => (
-                      <div key={key} className="p-3 bg-slate-50 border border-slate-200/80 rounded-lg flex flex-col gap-1.5 hover:bg-slate-100 transition-colors">
-                        <div className="flex justify-between items-center leading-none">
-                          <span className="text-[9.5px] font-black text-slate-800 uppercase tracking-tight">{item.title}</span>
-                          <span className={`font-mono text-[9px] font-black tracking-wide ${item.intensity > 70 ? "text-rose-600" : item.intensity > 40 ? "text-amber-600" : "text-emerald-600"}`}>
-                            {item.intensity}% conflict
-                          </span>
-                        </div>
-                        
-                        <div className="h-1 bg-slate-200 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full rounded-full transition-all duration-350 ${item.intensity > 70 ? "bg-rose-500 animate-pulse" : item.intensity > 40 ? "bg-amber-500" : "bg-emerald-500"}`}
-                            style={{ width: `${item.intensity}%` }}
-                          ></div>
-                        </div>
-                        
-                        <div className="flex gap-1 text-[8.5px] text-slate-500 leading-tight font-medium">
-                          <span className="font-extrabold text-[#0F4C81] uppercase tracking-wide shrink-0">Actors:</span>
-                          <span className="truncate">{item.parties}</span>
-                        </div>
-                        <p className="text-[9.5px] italic text-slate-600 leading-tight">"{item.cause}"</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Objectives & Recommendations */}
+                      <div className="p-3.5 bg-slate-50 border border-[#E2E8F0] rounded">
+                        <span className="text-[8.5px] font-bold text-slate-400 uppercase tracking-wider block mb-1">STAKEHOLDER POLICY ACTION REQ</span>
+                        <p className="text-xs font-semibold text-slate-700 leading-relaxed">
+                          {getBoardroomAids(selectedStakeholder.role || selectedStakeholder.name).recommendation}
+                        </p>
                       </div>
-                    ))}
+
+                      {/* Supporting Evidence */}
+                      <div className="p-3.5 bg-slate-50 border border-[#E2E8F0] rounded">
+                        <span className="text-[8.5px] font-bold text-[#0F4C81] uppercase tracking-wider block mb-1">VALIDATING DATA EVIDENCE</span>
+                        <p className="text-xs font-semibold text-slate-700 leading-relaxed">
+                          {getBoardroomAids(selectedStakeholder.role || selectedStakeholder.name).evidence}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Active Conflicts display */}
+                    <div className="p-4 bg-rose-50 border border-rose-100 rounded-md flex gap-3 items-start">
+                      <span className="material-symbols-outlined text-rose-600 text-lg mt-0.5">gpp_maybe</span>
+                      <div>
+                        <span className="text-[9px] font-bold text-rose-700 uppercase tracking-wide block">ACTIVE BOARDROOM DISAGREEMENT</span>
+                        <p className="text-xs font-semibold text-slate-800 mt-1 leading-relaxed">
+                          {getBoardroomAids(selectedStakeholder.role || selectedStakeholder.name).disagreement}
+                        </p>
+                      </div>
+                    </div>
+
                   </div>
                 </div>
-              </div>
 
-              {/* Trade-off Sliders workspace */}
-              <div className="bg-white border border-[#E2E8F0] p-5 rounded-lg shadow-xs">
-                <div className="flex justify-between items-center mb-3">
+                {/* REGIONAL DISAGREEMENT GEOGRAPHIC HEATMAP */}
+                <div id="regional-consensus-map" className="bg-white border border-[#E2E8F0] p-6 rounded-xl shadow-sm space-y-4">
                   <div>
-                    <h5 className="text-xs font-bold text-[#0F172A] uppercase tracking-wide">Compromise Alignment Weight</h5>
-                    <p className="text-[10px] text-slate-500 mt-0.5 uppercase">Adjust trade-offs. Score &lt; 45% triggers policy conflict warnings.</p>
-                  </div>
-                  <span className={`font-mono text-xl font-black ${selectedStakeholder.tradeoffScore < 45 ? "text-rose-600" : "text-[#0F4C81]"}`}>
-                    {selectedStakeholder.tradeoffScore}%
-                  </span>
-                </div>
-
-                <div className="space-y-2">
-                  <input 
-                    type="range"
-                    min={10}
-                    max={100}
-                    value={selectedStakeholder.tradeoffScore}
-                    onChange={(e) => handleUpdateWeight(selectedStakeholder.id, Number(e.target.value))}
-                    className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-[#0F4C81] focus:outline-none" 
-                  />
-                  <div className="flex justify-between text-[8px] font-bold text-slate-400 uppercase leading-none">
-                    <span>CONSERVATIVE / RIGID (0%)</span>
-                    <span>HIGH ALIGNED / COMPROMISING (100%)</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Impact Drill-down Strategy Alignments Panel */}
-              <div id="impact-drilldown-panel" className="bg-white border border-[#E2E8F0] p-5 rounded-lg shadow-xs space-y-4">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
-                  <div>
-                    <span className="inline-flex items-center gap-1.5 px-2 bg-amber-50 border border-amber-200 text-amber-800 rounded py-0.5 mb-1 text-[9px] font-black uppercase tracking-wider">
-                      <span className="material-symbols-outlined text-[10px]">analytics</span>
-                      Strategy KPI Analyzer
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-rose-50 border border-rose-100 text-rose-800 rounded font-black text-[9px] uppercase tracking-wide">
+                      <span className="material-symbols-outlined text-[10px]">map</span>
+                      Geographic Discordance Index
                     </span>
-                    <h4 className="text-sm font-black text-[#0F172A] uppercase tracking-wide">Impact Drill-down</h4>
-                    <p className="text-[10px] text-slate-500 font-semibold uppercase mt-0.5">Evaluate how proposed board strategies align with stakeholder seat KPIs.</p>
+                    <h4 className="text-sm font-black text-[#0F172A] uppercase tracking-wider mt-1">Regional Stakeholder Conflict Map</h4>
+                    <p className="text-[10px] text-slate-500 uppercase mt-0.5 font-semibold">Active divergence mapping between Govt, Finance, and Local Community objectives.</p>
                   </div>
-                  
-                  {/* Dropdown selector */}
-                  <div>
-                    <select
-                      value={selectedStrategyId}
-                      onChange={(e) => setSelectedStrategyId(e.target.value)}
-                      className="bg-[#eff4ff] border border-blue-200 text-[#0F4C81] text-xs font-bold px-3 py-1.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0F4C81] cursor-pointer"
-                    >
-                      {PROPOSED_STRATEGIES.map((strat) => (
-                        <option key={strat.id} value={strat.id}>
-                          {strat.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
 
-                {(() => {
-                  const activeStrat = PROPOSED_STRATEGIES.find(s => s.id === selectedStrategyId) || PROPOSED_STRATEGIES[3];
-                  return (
-                    <div className="space-y-4">
-                      {/* Description Header block */}
-                      <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded flex items-start gap-3">
-                        <div className="w-9 h-9 rounded bg-[#eff4ff] flex items-center justify-center text-[#0F4C81] mt-0.5 flex-shrink-0">
-                          <span className="material-symbols-outlined text-lg">{activeStrat.icon}</span>
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex justify-between items-start">
-                            <span className="text-xs font-extrabold text-slate-800">{activeStrat.name}</span>
-                            <span className="text-[9px] font-mono font-black text-[#0F4C81] bg-blue-50 px-1.5 py-0.5 rounded">
-                              FIT INDEX: {activeStrat.overallScore}%
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-center">
+                    {/* Dynamic Visual interactive Map layout (left side grid: 6 cols) */}
+                    <div className="lg:col-span-6 relative bg-slate-50 border border-slate-200 rounded-lg p-4 flex flex-col justify-center items-center overflow-hidden min-h-[220px]">
+                      <div className="absolute top-2 left-2 text-[8px] font-bold text-slate-450 font-mono tracking-widest uppercase">GEOGRAPHIC GIS GRID SECTORS</div>
+                      
+                      {/* SVG rendering the abstract regions with colors reflecting conflict levels */}
+                      <svg className="w-full max-w-[200px] h-auto aspect-square py-2" viewBox="0 0 100 100" fill="none">
+                        {/* N Region: Metropolitan Grid */}
+                        <path 
+                          d="M20,20 Q50,10 80,20 L75,50 Q50,45 25,50 Z" 
+                          fill={getRegionalConflictColor("METRO_NORTH")} 
+                          stroke="#475569" 
+                          strokeWidth="1.2" 
+                          className="transition-all duration-300 hover:opacity-80 cursor-pointer"
+                        />
+                        {/* W Region: Western Solar Desert */}
+                        <path 
+                          d="M20,20 L25,50 Q45,55 50,85 L15,80 Z" 
+                          fill={getRegionalConflictColor("DESERT_WEST")} 
+                          stroke="#475569" 
+                          strokeWidth="1.2" 
+                          className="transition-all duration-300 hover:opacity-80 cursor-pointer"
+                        />
+                        {/* S Region: Coastal Offshore Wind */}
+                        <path 
+                          d="M25,50 Q50,45 75,50 L80,80 Q50,90 50,85 Z" 
+                          fill={getRegionalConflictColor("COASTAL_SOUTH")} 
+                          stroke="#475569" 
+                          strokeWidth="1.2" 
+                          className="transition-all duration-300 hover:opacity-80 cursor-pointer"
+                        />
+                        {/* Central / East Region */}
+                        <polygon 
+                          points="25,50 50,45 75,50 50,85" 
+                          fill={getRegionalConflictColor("RURAL_EAST")} 
+                          stroke="#475569" 
+                          strokeWidth="1.2" 
+                          className="transition-all duration-300 hover:opacity-80 cursor-pointer"
+                        />
+                        
+                        {/* Labels overlay */}
+                        <text x="50" y="24" textAnchor="middle" fill="#0f172a" className="text-[5.5px] font-black font-sans uppercase tracking-wider select-none">NCR METRO</text>
+                        <text x="31" y="61" textAnchor="middle" fill="#0f172a" className="text-[5.5px] font-black font-sans uppercase tracking-wider select-none">WEST SUN</text>
+                        <text x="65" y="70" textAnchor="middle" fill="#0f172a" className="text-[5.5px] font-black font-sans uppercase tracking-wider select-none">COASTAL S</text>
+                        <text x="51" y="52" textAnchor="middle" fill="#0f172a" className="text-[5.5px] font-black font-sans uppercase tracking-wider select-none">EAST TIES</text>
+                      </svg>
+                    </div>
+
+                    {/* Regional detail logs & dynamic intensity calculations (right side details: 6 cols) */}
+                    <div className="lg:col-span-6 space-y-3">
+                      {Object.entries(getRegionalConflictMetrics()).map(([key, item]) => (
+                        <div key={key} className="p-3 bg-slate-50 border border-slate-200/80 rounded-lg flex flex-col gap-1.5 hover:bg-slate-100 transition-colors">
+                          <div className="flex justify-between items-center leading-none">
+                            <span className="text-[9.5px] font-black text-slate-800 uppercase tracking-tight">{item.title}</span>
+                            <span className={`font-mono text-[9px] font-black tracking-wide ${item.intensity > 70 ? "text-rose-600" : item.intensity > 40 ? "text-amber-600" : "text-emerald-600"}`}>
+                              {item.intensity}% conflict
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-600 mt-1 font-semibold leading-relaxed">
-                            {activeStrat.description}
-                          </p>
-                          <div className="mt-1.5 text-[9px] font-mono font-bold text-[#0F4C81] uppercase tracking-wider">
-                            🎯 PRIMARY FOCUS: {activeStrat.primaryFocus}
+                          
+                          <div className="h-1 bg-slate-200 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full rounded-full transition-all duration-350 ${item.intensity > 70 ? "bg-rose-500 animate-pulse" : item.intensity > 40 ? "bg-amber-500" : "bg-emerald-500"}`}
+                              style={{ width: `${item.intensity}%` }}
+                            ></div>
+                          </div>
+                          
+                          <div className="flex gap-1 text-[8.5px] text-slate-500 leading-tight font-medium">
+                            <span className="font-extrabold text-[#0F4C81] uppercase tracking-wide shrink-0">Actors:</span>
+                            <span className="truncate">{item.parties}</span>
+                          </div>
+                          <p className="text-[9.5px] italic text-slate-600 leading-tight">"{item.cause}"</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Trade-off Sliders workspace */}
+                <div className="bg-white border border-[#E2E8F0] p-5 rounded-lg shadow-xs">
+                  <div className="flex justify-between items-center mb-3">
+                    <div>
+                      <h5 className="text-xs font-bold text-[#0F172A] uppercase tracking-wide">Compromise Alignment Weight</h5>
+                      <p className="text-[10px] text-slate-500 mt-0.5 uppercase">Adjust trade-offs. Score &lt; 45% triggers policy conflict warnings.</p>
+                    </div>
+                    <span className={`font-mono text-xl font-black ${selectedStakeholder.tradeoffScore < 45 ? "text-rose-600" : "text-[#0F4C81]"}`}>
+                      {selectedStakeholder.tradeoffScore}%
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    <input 
+                      type="range"
+                      min={10}
+                      max={100}
+                      value={selectedStakeholder.tradeoffScore}
+                      onChange={(e) => handleUpdateWeight(selectedStakeholder.id, Number(e.target.value))}
+                      className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-[#0F4C81] focus:outline-none" 
+                    />
+                    <div className="flex justify-between text-[8px] font-bold text-slate-400 uppercase leading-none">
+                      <span>CONSERVATIVE / RIGID (0%)</span>
+                      <span>HIGH ALIGNED / COMPROMISING (100%)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Impact Drill-down Strategy Alignments Panel */}
+                <div id="impact-drilldown-panel" className="bg-white border border-[#E2E8F0] p-5 rounded-lg shadow-xs space-y-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-3 gap-2">
+                    <div>
+                      <span className="inline-flex items-center gap-1.5 px-2 bg-amber-50 border border-amber-200 text-amber-800 rounded py-0.5 mb-1 text-[9px] font-black uppercase tracking-wider">
+                        <span className="material-symbols-outlined text-[10px]">analytics</span>
+                        Strategy KPI Analyzer
+                      </span>
+                      <h4 className="text-sm font-black text-[#0F172A] uppercase tracking-wide">Impact Drill-down</h4>
+                      <p className="text-[10px] text-slate-500 font-semibold uppercase mt-0.5">Evaluate how proposed board strategies align with stakeholder seat KPIs.</p>
+                    </div>
+                    
+                    {/* Dropdown selector */}
+                    <div>
+                      <select
+                        value={selectedStrategyId}
+                        onChange={(e) => setSelectedStrategyId(e.target.value)}
+                        className="bg-[#eff4ff] border border-blue-200 text-[#0F4C81] text-xs font-bold px-3 py-1.5 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#0F4C81] cursor-pointer"
+                      >
+                        {PROPOSED_STRATEGIES.map((strat) => (
+                          <option key={strat.id} value={strat.id}>
+                            {strat.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {(() => {
+                    const activeStrat = PROPOSED_STRATEGIES.find(s => s.id === selectedStrategyId) || PROPOSED_STRATEGIES[3];
+                    return (
+                      <div className="space-y-4">
+                        {/* Description Header block */}
+                        <div className="p-3 bg-slate-50 border border-[#E2E8F0] rounded flex items-start gap-3">
+                          <div className="w-9 h-9 rounded bg-[#eff4ff] flex items-center justify-center text-[#0F4C81] mt-0.5 flex-shrink-0">
+                            <span className="material-symbols-outlined text-lg">{activeStrat.icon}</span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex justify-between items-start">
+                              <span className="text-xs font-extrabold text-slate-800">{activeStrat.name}</span>
+                              <span className="text-[9px] font-mono font-black text-[#0F4C81] bg-blue-50 px-1.5 py-0.5 rounded">
+                                FIT INDEX: {activeStrat.overallScore}%
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-600 mt-1 font-semibold leading-relaxed">
+                              {activeStrat.description}
+                            </p>
+                            <div className="mt-1.5 text-[9px] font-mono font-bold text-[#0F4C81] uppercase tracking-wider">
+                              🎯 PRIMARY FOCUS: {activeStrat.primaryFocus}
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      {/* Direct Dual Metric Focus: Investment vs. Reliability */}
-                      <div className="bg-slate-50/50 p-3.5 border border-[#E2E8F0] rounded-lg">
-                        <span className="text-[9px] font-black text-[#0F4C81] uppercase tracking-wider block mb-2 font-mono">
-                          Core Trade-off Focus: Investment vs. Reliability
-                        </span>
-                        
-                        {(() => {
-                          const investmentAlign = activeStrat.kpiAlignments["stk-5"]?.score || 50;
-                          const reliabilityAlign = activeStrat.kpiAlignments["stk-1"]?.score || 50;
-
-                          return (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {/* Investment side (stk-5) */}
-                              <div className="bg-white p-3 rounded border border-slate-200">
-                                <div className="flex justify-between items-center mb-1">
-                                  <span className="text-[10px] font-black text-slate-700 uppercase tracking-tight flex items-center gap-1 leading-none">
-                                    <span className="material-symbols-outlined text-xs text-emerald-600">payments</span>
-                                    Capital (Investment) Max KPI
-                                  </span>
-                                  <span className="font-mono text-[11px] font-black text-[#004c69]">{investmentAlign}%</span>
-                                </div>
-                                <div className="h-1 bg-slate-100 rounded-full overflow-hidden mb-1.5">
-                                  <div className="h-full bg-sky-600 rounded-full" style={{ width: `${investmentAlign}%` }}></div>
-                                </div>
-                                <p className="text-[9.5px] text-slate-500 font-semibold leading-tight">
-                                  {activeStrat.kpiAlignments["stk-5"]?.justification}
-                                </p>
-                              </div>
-
-                              {/* Reliability side (stk-1) */}
-                              <div className="bg-white p-3 rounded border border-slate-200">
-                                <div className="flex justify-between items-center mb-1">
-                                  <span className="text-[10px] font-black text-slate-700 uppercase tracking-tight flex items-center gap-1 leading-none">
-                                    <span className="material-symbols-outlined text-xs text-blue-600 font-bold">bolt</span>
-                                    Reliability Standards compliance
-                                  </span>
-                                  <span className="font-mono text-[11px] font-black text-blue-700">{reliabilityAlign}%</span>
-                                </div>
-                                <div className="h-1 bg-slate-100 rounded-full overflow-hidden mb-1.5">
-                                  <div className="h-full bg-[#0F4C81] rounded-full" style={{ width: `${reliabilityAlign}%` }}></div>
-                                </div>
-                                <p className="text-[9.5px] text-slate-500 font-semibold leading-tight">
-                                  {activeStrat.kpiAlignments["stk-1"]?.justification}
-                                </p>
-                              </div>
-                            </div>
-                          );
-                        })()}
-                      </div>
-
-                      {/* Complete Stakeholder KPI List */}
-                      <div className="space-y-2">
-                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block font-mono">
-                          Stakeholder KPI Alignments
-                        </span>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {stakeholders.map((stk) => {
-                            const alignment = activeStrat.kpiAlignments[stk.id];
-                            if (!alignment) return null;
-                            const statusStyles = 
-                              alignment.status === "EXCELLENT" 
-                                ? "bg-emerald-50 text-emerald-800 border-emerald-100"
-                                : alignment.status === "CONFORMING"
-                                  ? "bg-sky-50 text-blue-800 border-blue-100"
-                                  : alignment.status === "CONSTRAINED"
-                                    ? "bg-amber-50 text-amber-800 border-amber-100"
-                                    : "bg-rose-50 text-rose-800 border-rose-100";
+                        {/* Direct Dual Metric Focus: Investment vs. Reliability */}
+                        <div className="bg-slate-50/50 p-3.5 border border-[#E2E8F0] rounded-lg">
+                          <span className="text-[9px] font-black text-[#0F4C81] uppercase tracking-wider block mb-2 font-mono">
+                            Core Trade-off Focus: Investment vs. Reliability
+                          </span>
+                          
+                          {(() => {
+                            const investmentAlign = activeStrat.kpiAlignments["stk-5"]?.score || 50;
+                            const reliabilityAlign = activeStrat.kpiAlignments["stk-1"]?.score || 50;
 
                             return (
-                              <div key={stk.id} className="p-3 bg-white border border-slate-200 rounded-lg hover:border-[#0F4C81]/30 transition-colors">
-                                <div className="flex justify-between items-start gap-1">
-                                  <div className="min-w-0 flex-1">
-                                    <div className="flex items-center gap-1">
-                                      <span className="material-symbols-outlined text-slate-500 text-sm">{stk.icon}</span>
-                                      <span className="text-[11px] font-extrabold text-slate-900 truncate block">{stk.name}</span>
-                                    </div>
-                                    <span className="text-[9.5px] text-slate-500 font-black uppercase tracking-wider block mt-0.5 truncate">{alignment.kpiName}</span>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {/* Investment side (stk-5) */}
+                                <div className="bg-white p-3 rounded border border-slate-200">
+                                  <div className="flex justify-between items-center mb-1">
+                                    <span className="text-[10px] font-black text-slate-700 uppercase tracking-tight flex items-center gap-1 leading-none">
+                                      <span className="material-symbols-outlined text-xs text-emerald-600">payments</span>
+                                      Capital (Investment) Max KPI
+                                    </span>
+                                    <span className="font-mono text-[11px] font-black text-[#004c69]">{investmentAlign}%</span>
                                   </div>
-                                  <span className={`px-1.5 py-0.5 text-[8px] font-black rounded border flex-shrink-0 uppercase font-mono ${statusStyles}`}>
-                                    {alignment.status}
-                                  </span>
+                                  <div className="h-1 bg-slate-100 rounded-full overflow-hidden mb-1.5">
+                                    <div className="h-full bg-sky-600 rounded-full" style={{ width: `${investmentAlign}%` }}></div>
+                                  </div>
+                                  <p className="text-[9.5px] text-slate-500 font-semibold leading-tight">
+                                    {activeStrat.kpiAlignments["stk-5"]?.justification}
+                                  </p>
                                 </div>
 
-                                {/* Alignment bar */}
-                                <div className="mt-2 text-slate-700">
-                                  <div className="flex justify-between items-center text-[9px] font-mono font-bold uppercase leading-none mb-1">
-                                    <span className="text-slate-400">Alignment Fit</span>
-                                    <span className="text-[#0F4C81]">{alignment.score}%</span>
+                                {/* Reliability side (stk-1) */}
+                                <div className="bg-white p-3 rounded border border-slate-200">
+                                  <div className="flex justify-between items-center mb-1">
+                                    <span className="text-[10px] font-black text-slate-700 uppercase tracking-tight flex items-center gap-1 leading-none">
+                                      <span className="material-symbols-outlined text-xs text-blue-600 font-bold">bolt</span>
+                                      Reliability Standards compliance
+                                    </span>
+                                    <span className="font-mono text-[11px] font-black text-blue-700">{reliabilityAlign}%</span>
                                   </div>
-                                  <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
-                                    <div 
-                                      className={`h-full rounded-full ${
-                                        alignment.status === "EXCELLENT" 
-                                          ? "bg-emerald-500" 
-                                          : alignment.status === "CONFORMING"
-                                            ? "bg-sky-500"
-                                            : alignment.status === "CONSTRAINED"
-                                              ? "bg-amber-500"
-                                              : "bg-rose-500"
-                                      }`} 
-                                      style={{ width: `${alignment.score}%` }}
-                                    ></div>
+                                  <div className="h-1 bg-slate-100 rounded-full overflow-hidden mb-1.5">
+                                    <div className="h-full bg-[#0F4C81] rounded-full" style={{ width: `${reliabilityAlign}%` }}></div>
                                   </div>
+                                  <p className="text-[9.5px] text-slate-500 font-semibold leading-tight">
+                                    {activeStrat.kpiAlignments["stk-1"]?.justification}
+                                  </p>
                                 </div>
-
-                                <p className="text-[10px] text-slate-500 mt-2 font-semibold leading-relaxed">
-                                  {alignment.justification}
-                                </p>
                               </div>
                             );
-                          })}
+                          })()}
                         </div>
+
+                        {/* Complete Stakeholder KPI List */}
+                        <div className="space-y-2">
+                          <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block font-mono">
+                            Stakeholder KPI Alignments
+                          </span>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {stakeholders.map((stk) => {
+                              const alignment = activeStrat.kpiAlignments[stk.id];
+                              if (!alignment) return null;
+                              const statusStyles = 
+                                alignment.status === "EXCELLENT" 
+                                  ? "bg-emerald-50 text-emerald-800 border-emerald-100"
+                                  : alignment.status === "CONFORMING"
+                                    ? "bg-sky-50 text-blue-800 border-blue-100"
+                                    : alignment.status === "CONSTRAINED"
+                                      ? "bg-amber-50 text-amber-800 border-amber-100"
+                                      : "bg-rose-50 text-rose-800 border-rose-100";
+
+                              return (
+                                <div key={stk.id} className="p-3 bg-white border border-slate-200 rounded-lg hover:border-[#0F4C81]/30 transition-colors">
+                                  <div className="flex justify-between items-start gap-1">
+                                    <div className="min-w-0 flex-1">
+                                      <div className="flex items-center gap-1">
+                                        <span className="material-symbols-outlined text-slate-500 text-sm">{stk.icon}</span>
+                                        <span className="text-[11px] font-extrabold text-slate-900 truncate block">{stk.name}</span>
+                                      </div>
+                                      <span className="text-[9.5px] text-slate-500 font-black uppercase tracking-wider block mt-0.5 truncate">{alignment.kpiName}</span>
+                                    </div>
+                                    <span className={`px-1.5 py-0.5 text-[8px] font-black rounded border flex-shrink-0 uppercase font-mono ${statusStyles}`}>
+                                      {alignment.status}
+                                    </span>
+                                  </div>
+
+                                  {/* Alignment bar */}
+                                  <div className="mt-2 text-slate-700">
+                                    <div className="flex justify-between items-center text-[9px] font-mono font-bold uppercase leading-none mb-1">
+                                      <span className="text-slate-400">Alignment Fit</span>
+                                      <span className="text-[#0F4C81]">{alignment.score}%</span>
+                                    </div>
+                                    <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+                                      <div 
+                                        className={`h-full rounded-full ${
+                                          alignment.status === "EXCELLENT" 
+                                            ? "bg-emerald-500" 
+                                            : alignment.status === "CONFORMING"
+                                              ? "bg-sky-500"
+                                              : alignment.status === "CONSTRAINED"
+                                                ? "bg-amber-500"
+                                                : "bg-rose-500"
+                                        }`} 
+                                        style={{ width: `${alignment.score}%` }}
+                                      ></div>
+                                    </div>
+                                  </div>
+
+                                  <p className="text-[10px] text-slate-500 mt-2 font-semibold leading-relaxed">
+                                    {alignment.justification}
+                                  </p>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
                       </div>
-
-                    </div>
-                  );
-                })()}
-              </div>
-
-            </div>
-          ) : (
-            <div className="p-8 text-center text-slate-400 font-bold uppercase tracking-wide">
-              No Board Member Selected. Click on any cards to begin.
-            </div>
-          )}
-
-        </div>
-
-        {/* Dynamic Conflict Resolution Engine Trigger Action */}
-        <div className="pt-4 border-t border-[#E2E8F0] bg-white p-4 sticky bottom-0 z-20">
-          <div className="flex flex-col gap-2">
-            <button 
-              disabled={resolutionRunning}
-              onClick={handleTriggerResolution}
-              className="w-full py-2.5 bg-[#0F4C81] hover:bg-[#2563EB] text-white rounded font-bold text-[11px] uppercase tracking-wider text-center transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5 disabled:opacity-50"
-            >
-              <span className="material-symbols-outlined text-base">mediation</span>
-              {resolutionRunning ? "RUNNING CONFLICT ALIGNER..." : "EXECUTE CONFLICT RESOLUTION SOLVER"}
-            </button>
-            <span className="text-[9.5px] text-slate-450 text-center leading-none">
-              Runs heuristic alignment iterations to optimize stakeholder weights above conflicting thresholds automatically.
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================
-          RIGHT COLUMN: CONSENSUS STRATEGY
-          ======================================================== */}
-      <section className="w-[360px] bg-slate-50 border-l border-[#E2E8F0] flex flex-col z-10 select-text">
-        
-        {/* Column Header */}
-        <div className="p-4 border-b border-[#E2E8F0] bg-white">
-          <h3 className="text-xs font-black uppercase text-[#0F172A]">Consensus Strategy</h3>
-          <p className="text-[10px] text-slate-500 mt-1 uppercase">Board directive alignment outcomes ledger.</p>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          
-          {/* Executive Consensus Status Card */}
-          <div className="bg-white border border-[#E2E8F0] p-4 rounded-lg shadow-xs space-y-3">
-            <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-              <div className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-xs text-[#0F4C81]">group_work</span>
-                <span className="text-[9px] font-black tracking-widest text-[#0F4C81] uppercase">
-                  COUNCIL CONSENSUS STATUS
-                </span>
-              </div>
-              <span className="px-1.5 py-0.5 rounded text-[8px] font-mono font-bold bg-[#eff4ff] text-[#0F4C81] border border-blue-100">
-                LIVE LEDGER
-              </span>
-            </div>
-
-            <div className="space-y-2.5 text-[10.5px]">
-              {/* Active Stakeholders Alignment Mini list */}
-              <div>
-                <span className="text-[8.5px] font-bold text-slate-400 uppercase tracking-wider block mb-1">ACTIVE MEMBER COMMITTAL</span>
-                <div className="grid grid-cols-2 gap-2 text-[10px] font-mono select-none">
-                  {stakeholders.map(s => (
-                    <div key={s.id} className="flex justify-between items-center bg-white border border-slate-200 px-2 py-1 rounded">
-                      <span className="text-slate-500 truncate max-w-[85px]">{s.role}</span>
-                      <span className={`font-black ${s.isConflict ? "text-rose-600" : "text-emerald-600"}`}>{s.tradeoffScore}%</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Status indices */}
-              <div className="flex justify-between items-center bg-slate-50 border border-[#E2E8F0] px-2 py-1.5 rounded mt-1 text-[11px]">
-                <div className="flex items-center gap-1">
-                  <span className="text-slate-500 font-bold uppercase text-[9px]">CONVERGENCE INDEX:</span>
-                  <span className="font-mono font-black text-[#0F4C81]">{getOverallConsensus()}%</span>
-                </div>
-                <div className="flex items-center gap-1 font-bold">
-                  <span className="text-slate-500 uppercase text-[9px]">CONFLICTS:</span>
-                  <span className={`font-mono ${stakeholders.filter(s => s.isConflict).length > 0 ? "text-rose-600 font-extrabold" : "text-emerald-600"}`}>
-                    {stakeholders.filter(s => s.isConflict).length}
-                  </span>
-                </div>
-              </div>
-
-              {/* Dynamic Consensus Alignment Recommendation */}
-              <div className="p-2 bg-[#eff4ff] border border-blue-100 rounded text-[10px] text-[#0F4C81] italic flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-600 flex-shrink-0 animate-ping"></span>
-                <span>
-                  {stakeholders.filter(s => s.isConflict).length > 0 
-                    ? "Synthesizing Policy compromise model... Suggest compromises on lower capacity thresholds."
-                    : "Policy unified. All stakeholder priorities satisfy baseline criteria bounds."
-                  }
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Consensus progress gauge circle card */}
-          {(() => {
-            const isAligned = stakeholders.filter(s => s.isConflict).length === 0;
-            return (
-              <div className={`p-5 rounded-lg shadow-xs flex flex-col items-center border transition-all duration-300 ${
-                isAligned 
-                  ? "bg-slate-50 border-emerald-500/30" 
-                  : "bg-white border-[#E2E8F0]"
-              }`}>
-                <span className="text-[8.5px] font-black uppercase tracking-widest text-slate-400 text-center mb-3 block">
-                  Consensus Status Indicator
-                </span>
-
-                {/* Radial SVG Gauge (Retained and simplified with no animations or flashy halos) */}
-                <div className="relative w-32 h-32 flex items-center justify-center p-2">
-                  <svg className="w-full h-full transform -rotate-90">
-                    <circle cx="64" cy="64" r="54" className="stroke-slate-100 fill-none" strokeWidth="8" />
-                    <circle 
-                      cx="64" 
-                      cy="64" 
-                      r="54" 
-                      className={`fill-none transition-all duration-300 stroke-[8] ${
-                        isAligned ? "stroke-emerald-600" : "stroke-[#0F4C81]"
-                      }`}
-                      strokeDasharray={339}
-                      strokeDashoffset={339 - (339 * getOverallConsensus()) / 100}
-                    />
-                  </svg>
-                  <div className="absolute text-center flex flex-col items-center justify-center">
-                    {isAligned ? (
-                      <>
-                        <span className="font-mono text-xl font-black text-emerald-700 leading-none">100%</span>
-                        <span className="text-[7.5px] font-extrabold uppercase tracking-widest text-emerald-600 mt-1 leading-none">Aligned</span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="font-mono text-xl font-black text-[#0F172A] leading-none">
-                          {getOverallConsensus()}%
-                        </span>
-                        <span className="text-[7.5px] font-bold uppercase tracking-widest text-[#0F4C81] mt-1 leading-none">
-                          Agreed Index
-                        </span>
-                      </>
-                    )}
-                  </div>
+                    );
+                  })()}
                 </div>
 
-                {isAligned && (
-                  <div className="mt-4 w-full p-3 bg-emerald-50/50 border border-emerald-200/50 rounded-md text-center space-y-1">
-                    <div className="flex items-center justify-center gap-1.5 text-[11px] font-black text-emerald-800 uppercase tracking-wide">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-                      Consensus Achieved
-                    </div>
-                    <div className="text-[10px] font-semibold text-slate-600">
-                      Alignment Score: <span className="font-mono text-emerald-700 font-extrabold">100%</span>
-                    </div>
-                    <p className="text-[9px] text-slate-500 font-medium leading-tight">
-                      All stakeholder objectives satisfied.
-                    </p>
-                  </div>
-                )}
-
-                <div className="mt-4 flex justify-between w-full text-[10px] text-[#64748B] font-bold border-t pt-3 border-slate-100">
-                  <span className="text-emerald-600">
-                    {stakeholders.filter(s => s.tradeoffScore >= 45).length} SECURED
-                  </span>
-                  <span className={`${isAligned ? "text-emerald-600" : "text-rose-600"} uppercase`}>
-                    {stakeholders.filter(s => s.isConflict).length} CONFLICTS
-                  </span>
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* List of active disagreements / compromise details */}
-          <div className="space-y-2.5">
-            <span className="text-[9.5px] font-black text-slate-400 uppercase tracking-wide block px-1">
-              BOARDROOM DISAGREEMENTS PENDING
-            </span>
-
-            {stakeholders.filter(s => s.isConflict).length === 0 ? (
-              <div className="p-3 bg-emerald-50 border-l-4 border-emerald-500 rounded text-xs text-emerald-800">
-                <p className="font-bold">UNANIMOUS AGREEMENT REACHED!</p>
-                <p className="text-[10px] text-slate-500 mt-0.5 leading-normal">
-                  All stakeholder trade-off parameters satisfy consensus clearance. Ready to deploy Modernization Action.
-                </p>
               </div>
             ) : (
-              stakeholders.filter(s => s.isConflict).map(s => (
-                <div key={s.id} className="p-3 bg-rose-50 border-l-4 border-rose-500 rounded text-xs text-slate-800">
-                  <div className="flex justify-between items-center font-bold">
-                    <span className="text-[#0F172A]">{s.role} Conflict</span>
-                    <span className="font-mono text-[9px] text-rose-700">Score: {s.tradeoffScore}%</span>
-                  </div>
-                  <p className="text-[10.5px] text-slate-500 mt-0.5 leading-normal">
-                    Requires compromising capacity above 45% threshold.
-                  </p>
-                </div>
-              ))
+              <div className="p-8 text-center text-slate-400 font-bold uppercase tracking-wide">
+                No Board Member Selected. Click on any cards to begin.
+              </div>
             )}
+
           </div>
 
-          {/* Final boardroom policy directive */}
-          <div className="bg-white border border-[#E2E8F0] p-4 rounded-lg shadow-xs">
-            <span className="text-[8.5px] font-bold text-[#0F4C81] uppercase tracking-widest block mb-2">
-              FINAL RECOMMENDED CORPORATE DIRECTIVE
-            </span>
-            <div className="text-xs space-y-2 select-text text-slate-600">
-              <p className="font-semibold leading-relaxed">
-                1. Ratify 2040 Decarbonization Targets conditional upon securing capital portfolio boundaries.
-              </p>
-              <p className="font-semibold leading-relaxed">
-                2. Phase-in regional Boreas undersea lines concurrently with rural microgrid battery loop backflow isolators.
-              </p>
-              <p className="font-semibold leading-relaxed">
-                3. Authorize smart grid residential curtailment mesh under Extreme Climate Stress declarations only.
-              </p>
+          {/* Dynamic Conflict Resolution Engine Trigger Action */}
+          <div className="pt-4 border-t border-[#E2E8F0] bg-white p-4 sticky bottom-0 z-20">
+            <div className="flex flex-col gap-2">
+              <button 
+                disabled={resolutionRunning}
+                onClick={handleTriggerResolution}
+                className="w-full py-2.5 bg-[#0F4C81] hover:bg-[#2563EB] text-white rounded font-bold text-[11px] uppercase tracking-wider text-center transition-all cursor-pointer shadow-xs flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <span className="material-symbols-outlined text-base">mediation</span>
+                {resolutionRunning ? "RUNNING CONFLICT ALIGNER..." : "EXECUTE CONFLICT RESOLUTION SOLVER"}
+              </button>
+              <span className="text-[9.5px] text-slate-450 text-center leading-none">
+                Runs heuristic alignment iterations to optimize stakeholder weights above conflicting thresholds automatically.
+              </span>
             </div>
           </div>
+        </section>
 
-        </div>
-
-        <div className="p-4 bg-white border-t border-[#E2E8F0] text-center">
-          <p className="text-[9.5px] text-slate-400">Approved minutes are saved in the NEXUS Ledger state registry.</p>
-        </div>
-      </section>
+        {/* Modular Right Column */}
+        <ConsensusStrategies
+          stakeholders={stakeholders}
+          overallConsensus={getOverallConsensus()}
+        />
 
       </div>
     </div>

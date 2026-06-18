@@ -1,11 +1,28 @@
 import React, { useState, useEffect } from "react";
 import { ScenarioParameters } from "../types";
 import { usePlanningScope } from "../PlanningScopeContext";
+import { ScenarioSandboxTab } from "./scenario-lab/ScenarioSandboxTab";
+import { FutureShockTab } from "./scenario-lab/FutureShockTab";
+import { RoadmapTab } from "./scenario-lab/RoadmapTab";
+import { BranchingTab } from "./scenario-lab/BranchingTab";
+
+interface WhatIfBranch {
+  id: string;
+  name: string;
+  baseScenario: string;
+  mitigationStrategy: string;
+  mitigationIntensity: number;
+  extraCapex: number;
+  projectedStability: number;
+  avoidedOutagesPct: number;
+  regionalGdpMultiplier: number;
+  timestamp: string;
+}
 
 export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> = ({ onNavigate }) => {
   const { scopeType, selectedRegion, selectedHorizon, renewableTarget } = usePlanningScope();
 
-  // Master mode switcher: SANDBOX, FUTURE_SHOCK, ROADMAP, BRANCHING
+  // Master mode switcher
   const [activeTab, setActiveTab] = useState<"SANDBOX" | "FUTURE_SHOCK" | "ROADMAP" | "BRANCHING">("FUTURE_SHOCK");
 
   // Sync Roadmap Phase to Selected Horizon globally
@@ -50,20 +67,7 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
     }
   }, [scopeType, selectedRegion, selectedHorizon, renewableTarget]);
 
-  // --- Sub-Tab 4: Visual What-If Branching States ---
-  interface WhatIfBranch {
-    id: string;
-    name: string;
-    baseScenario: string;
-    mitigationStrategy: string;
-    mitigationIntensity: number;
-    extraCapex: number;
-    projectedStability: number;
-    avoidedOutagesPct: number;
-    regionalGdpMultiplier: number;
-    timestamp: string;
-  }
-
+  // --- Visual What-If Branching States ---
   const [branches, setBranches] = useState<WhatIfBranch[]>([
     {
       id: "branch-1",
@@ -159,7 +163,7 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
           const nextStep = shockStep + 1;
           setShockStep(nextStep);
           updateShockMetricsForStep(nextStep);
-        }, 2200); // 2.2 seconds per stage for dramatic demonstration
+        }, 2200);
       } else {
         setShockSimulating(false);
         setShockLogs((prev) => [...prev, "[SUCCESS] Cascade complete. Dynamic islanding algorithms & high opex reserves secured total recovery."]);
@@ -169,7 +173,6 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
   }, [shockSimulating, shockStep]);
 
   const updateShockMetricsForStep = (step: number) => {
-    // Generate logarithmic stats step by step to represent thermal propagation
     switch (step) {
       case 1:
         setShockLogs((prev) => [
@@ -206,7 +209,7 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
           ...prev, 
           `[STAGE 4] Congestion peaks. Re-routing loop triggered via battery secondary reserve. Grid islanded segments stabilizing.`
         ]);
-        setProjectedReliability(96.8); // recovery!
+        setProjectedReliability(96.8);
         setInvestmentReq(`$${(640 + 75 * shockIndustrial).toFixed(1)}M`);
         setRenewableImpact(shockRenewable);
         setCarbonReduction(Math.round(shockRenewable * 0.95));
@@ -229,7 +232,6 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
   const handleSpawnBranch = () => {
     if (!newBranchName.trim()) return;
     
-    // Core base metrics depending on selected scenario
     let baseRatio = 82.5; 
     if (newBaseScenario.includes("Inundation")) baseRatio = 75.8;
     if (newBaseScenario.includes("EV Fleet")) baseRatio = 81.2;
@@ -363,14 +365,14 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
         <div className="flex-1 overflow-y-auto p-6 space-y-6 relative">
           <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[radial-gradient(#0F4C81_1.5px,transparent_1.5px)] [background-size:24px_24px]"></div>
 
-          {/* Methodology & Separation Integrity Banner */}
+          {/* Methodology Banner */}
           <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative z-10 shadow-xs">
             <div className="flex gap-3 items-start">
               <span className="material-symbols-outlined text-[#0F4C81] bg-blue-50 p-2.5 rounded-lg border border-blue-100 text-xl font-bold">schema</span>
               <div>
                 <h2 className="text-xs font-black text-[#0F4C81] uppercase tracking-wider">Methodology & Separation Integrity</h2>
                 <p className="text-slate-500 text-[11px] leading-relaxed mt-0.5 font-semibold">
-                  This laboratory maintains strict architectural boundaries: <span className="text-[#0F4C81] font-bold">Observed Historical Reality</span> (audited public databases) serves as the baseline, while all future modernizations are clearly flagged as <span className="text-amber-705 font-bold">Scenario Forward Projections</span>.
+                  This laboratory maintains strict architectural boundaries: <span className="text-[#0F4C81] font-bold">Observed Historical Reality</span> serves as the baseline, while all future modernizations are clearly flagged as <span className="text-amber-500 font-bold">Scenario Forward Projections</span>.
                 </p>
               </div>
             </div>
@@ -386,760 +388,56 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
             </div>
           </div>
 
-          {/* ======================= TAB 1: STANDARD SANDBOX ======================= */}
+          {/* Active Tab Dispatcher */}
           {activeTab === "SANDBOX" && (
-            <div className="space-y-6 relative z-10 transition-opacity duration-300">
-              {calculating && (
-                <div className="absolute inset-0 z-40 bg-white/70 backdrop-blur-[1px] flex flex-col items-center justify-center">
-                  <div className="bg-white border border-slate-200 p-6 rounded-xl shadow-xl text-center flex flex-col items-center">
-                    <span className="material-symbols-outlined text-4xl text-[#0F4C81] animate-spin">sync</span>
-                    <p className="text-xs font-bold text-slate-800 mt-2 uppercase tracking-wide">Evaluating Policy Trajectories...</p>
-                  </div>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                {/* Baseline view */}
-                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-xs font-extrabold flex items-center gap-1.5 uppercase text-slate-700">
-                      <span className="w-1.5 h-3 bg-slate-400 rounded"></span> Business as Usual
-                    </h3>
-                    <span className="font-mono text-[9px] text-slate-400 uppercase">Baseline v1.4</span>
-                  </div>
-                  
-                  <div className="h-44 bg-slate-50 rounded-xl flex items-end justify-between px-6 pb-2 pt-8 gap-3 border border-slate-200">
-                    <div className="flex-1 bg-slate-200 h-[40%] rounded-t-sm"></div>
-                    <div className="flex-1 bg-slate-200 h-[55%] rounded-t-sm"></div>
-                    <div className="flex-1 bg-slate-200 h-[65%] rounded-t-sm"></div>
-                    <div className="flex-1 bg-slate-200 h-[72%] rounded-t-sm"></div>
-                    <div className="flex-1 bg-slate-300 h-[80%] rounded-t-sm relative">
-                      <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg shadow text-left pointer-events-none">
-                        <span className="text-[7.5px] font-bold text-slate-400 uppercase tracking-wide whitespace-nowrap">Peak load 2040</span>
-                        <span className="font-mono text-xs font-black text-slate-800 block">14.2 GW</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3 mt-4 text-center text-xs">
-                    <div className="p-2.5 border border-slate-200 rounded-lg bg-slate-50">
-                      <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none">Emissions trend</p>
-                      <p className="font-mono font-bold text-rose-600 mt-1.5">+12% YoY</p>
-                    </div>
-                    <div className="p-2.5 border border-slate-200 rounded-lg bg-slate-50">
-                      <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none">Opex baseline</p>
-                      <p className="font-mono font-bold text-slate-800 mt-1.5">₹2,100 Cr / yr</p>
-                    </div>
-                    <div className="p-2.5 border border-slate-200 rounded-lg bg-slate-50">
-                      <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none">Projected SAIDI</p>
-                      <p className="font-mono font-bold text-emerald-600 mt-1.5">99.9%</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Dynamic simulated values */}
-                <div className="bg-white border border-blue-200 rounded-xl p-5 shadow-xs ring-4 ring-[#0F4C81]/5">
-                  <div className="flex justify-between items-center mb-3">
-                    <h3 className="text-xs font-extrabold flex items-center gap-1.5 uppercase text-[#0F4C81]">
-                      <span className="w-1.5 h-3 bg-[#0F4C81] rounded"></span> Active Policy Target
-                    </h3>
-                    <span className="text-[8.5px] text-[#0F4C81] font-extrabold bg-[#eff4ff] px-1.5 py-0.5 rounded leading-none">
-                      CALIBRATED Trajectory
-                    </span>
-                  </div>
-
-                  <div className="h-44 bg-[#eff4ff]/20 rounded-xl flex items-end justify-between px-6 pb-2 pt-8 gap-3 border border-[#cbdbf5]">
-                    <div className="flex-1 bg-[#0F4C81]/30 h-[28%] rounded-t-sm"></div>
-                    <div className="flex-1 bg-[#0F4C81]/45 h-[40%] rounded-t-sm"></div>
-                    <div className="flex-1 bg-[#0F4C81]/60 h-[50%] rounded-t-sm"></div>
-                    <div className="flex-1 bg-[#0F4C81]/75 h-[62%] rounded-t-sm"></div>
-                    <div className="flex-1 bg-[#0F4C81] h-[68%] rounded-t-sm relative">
-                      <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-white border border-[#cbdbf5] px-2.5 py-1.5 rounded-lg shadow text-left pointer-events-none">
-                        <span className="text-[7.5px] font-bold text-[#0F4C81] uppercase tracking-wide whitespace-nowrap">PEAK LOAD 2040</span>
-                        <span className="font-mono text-xs font-black text-[#0F4C81] block">{getPeakLoad()} GW</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3 mt-4 text-center text-xs">
-                    <div className="p-2.5 border border-blue-100 rounded-lg bg-[#eff4ff]/30">
-                      <p className="text-[8px] font-bold text-[#0F4C81] uppercase tracking-widest leading-none">CO2 reduction</p>
-                      <p className="font-mono font-bold text-teal-600 mt-1.5">-{getEmissionsOffset()}%</p>
-                    </div>
-                    <div className="p-2.5 border border-blue-100 rounded-lg bg-[#eff4ff]/30">
-                      <p className="text-[8px] font-bold text-[#0F4C81] uppercase tracking-widest leading-none">Opex savings</p>
-                      <p className="font-mono font-bold text-teal-600 mt-1.5">+{getOpexSavings()}%</p>
-                    </div>
-                    <div className="p-2.5 border border-blue-100 rounded-lg bg-[#eff4ff]/30">
-                      <p className="text-[8px] font-bold text-[#0F4C81] uppercase tracking-widest leading-none">DER capacity</p>
-                      <p className="font-mono font-bold text-[#0F4C81] mt-1.5">
-                        {(params.evAdoption * 0.8 + params.renewableTarget * 0.1).toFixed(1)}%
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Influx forecast & vulnerability block */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="bg-white border border-slate-200 rounded-xl p-5 lg:col-span-2 shadow-xs">
-                  <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-4">Investment Requirement Distribution</h4>
-                  <div className="h-44 flex items-end justify-between px-2 pt-4 relative text-center">
-                    <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-[8px] font-mono text-slate-400 pb-4">
-                      <span>₹10,000 Cr</span>
-                      <span>₹5,000 Cr</span>
-                      <span>₹0</span>
-                    </div>
-                    
-                    {/* Years bars */}
-                    <div className="flex-1 flex flex-col items-center justify-end h-full ml-8">
-                      <div className="w-1/2 bg-[#0F4C81] h-[15%] rounded-t"></div>
-                      <span className="text-[9px] mt-1.5 font-mono text-slate-500 font-semibold">2030</span>
-                    </div>
-                    <div className="flex-1 flex flex-col items-center justify-end h-full">
-                      <div className="w-1/2 bg-[#0F4C81] h-[35%] rounded-t" style={{ height: `${params.renewableTarget * 0.4}%` }}></div>
-                      <span className="text-[9px] mt-1.5 font-mono text-slate-500 font-semibold">2040</span>
-                    </div>
-                    <div className="flex-1 flex flex-col items-center justify-end h-full">
-                      <div className="w-1/2 bg-[#0F4C81] h-[65%] rounded-t" style={{ height: `${params.renewableTarget * 0.7}%` }}></div>
-                      <span className="text-[9px] mt-1.5 font-mono text-slate-500 font-semibold">2050</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs flex flex-col justify-between">
-                  <div>
-                    <h4 className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-4">Strategic Strain Levels</h4>
-                    <div className="space-y-4 text-xs font-semibold">
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-500">EV Fleet Surcharge:</span>
-                        <span className="font-mono font-bold text-[#0F4C81]">{(params.evAdoption * 0.9).toFixed(0)} Index</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-500">Base Overload Alert:</span>
-                        <span className="font-mono font-bold text-amber-600">{(params.populationGrowth * 18).toFixed(0)}% Delta</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-500">Thermal Contingency Status:</span>
-                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded text-[9px] font-extrabold uppercase">SECURE</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-3 bg-blue-50/50 rounded-lg text-[10.5px] text-slate-500 leading-relaxed border border-blue-100 mt-4">
-                    <span className="font-bold uppercase text-[9px] text-[#0F4C81] block mb-0.5">Sandbox Status</span>
-                    Adjust indicators on the sidebar panel to see live recalculated emissions impact and peak load.
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ScenarioSandboxTab
+              params={params}
+              setParams={setParams}
+              calculating={calculating}
+              handleRecalculateAll={handleRecalculateAll}
+              getPeakLoad={getPeakLoad}
+              getEmissionsOffset={getEmissionsOffset}
+              getOpexSavings={getOpexSavings}
+            />
           )}
 
-          {/* ======================= TAB 2: guided FUTURE SHOCK arena ======================= */}
           {activeTab === "FUTURE_SHOCK" && (
-            <div className="space-y-5 relative z-10 transition-opacity duration-300 select-text">
-              
-              {/* Simulation Dashboard HUD */}
-              <div className="bg-white border border-slate-200 rounded-xl p-5 text-slate-800 shadow-sm relative overflow-hidden">
-                <div className="absolute inset-0 bg-radial-gradient from-[#eff4ff]/30 to-transparent opacity-50 pointer-events-none"></div>
-                
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-200 pb-4 mb-4 gap-4 relative z-10">
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></span>
-                      <span className="font-mono text-[#0F4C81] font-extrabold text-[10px] uppercase tracking-widest">
-                        {shockSimulating ? `STRESS SEQUENCE ACTIVE (STAGE ${shockStep}/4)` : shockStep === 4 ? "STRESS SEQUENCE COMPLETE" : "STRESS SEQUENCE ARMED"}
-                      </span>
-                    </div>
-                    <h3 className="text-xl font-black mt-1 tracking-tight text-[#0f4c81] uppercase">Scenario Stress Evaluation</h3>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button 
-                      onClick={() => { setShockStep(0); setShockLogs(["[RESET] Simulation arena cleared to idle."]); setProjectedReliability(99.8); setInvestmentReq("₹150 Cr"); }}
-                      className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg font-black text-[10px] uppercase tracking-wider transition-colors cursor-pointer"
-                    >
-                      Reset Simulation
-                    </button>
-                    <button 
-                      disabled={shockSimulating}
-                      onClick={handleStartShockSimulation}
-                      className="px-5 py-2.5 bg-[#0F4C81] hover:bg-[#0c3e6b] text-white rounded-lg font-black text-xs uppercase tracking-wider transition-all cursor-pointer shadow-md disabled:opacity-50 flex items-center gap-2"
-                    >
-                      <span>⚡ Run Stress Test</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Two Column Layout: Left GIS Grid Schematic, Right live stress telemetry */}
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-4">
-                  
-                  {/* Left Column: SVG Grid with Logs */}
-                  <div className="flex flex-col gap-4">
-                    <div className="bg-slate-50 border border-slate-200 rounded-xl h-56 relative overflow-hidden flex items-center justify-center p-4">
-                      <div className="absolute inset-0 bg-[radial-gradient(#94a3b8_1.2px,transparent_1.2px)] [background-size:16px_16px] opacity-10"></div>
-                      
-                      {/* Visual grid schematics */}
-                      <div className="relative z-10 w-full h-full">
-                        <svg className="w-full h-full opacity-90">
-                          {/* Transmission corridors */}
-                          <line 
-                            x1="15%" y1="20%" x2="50%" y2="25%" 
-                            stroke={shockStep >= 3 ? "#f97316" : "#64748b"} 
-                            strokeWidth={shockStep >= 3 ? "4.5" : "2"} 
-                            className={shockStep >= 3 ? "animate-pulse" : ""} 
-                          />
-                          <line 
-                            x1="50%" y1="25%" x2="85%" y2="40%" 
-                            stroke={shockStep >= 3 ? "#ea580c" : "#64748b"} 
-                            strokeWidth={shockStep >= 3 ? "4.5" : "2"} 
-                          />
-                          <line 
-                            x1="50%" y1="25%" x2="40%" y2="80%" 
-                            stroke={shockStep >= 4 ? "#eab308" : shockStep >= 3 ? "#fb923c" : "#64748b"} 
-                            strokeWidth={shockStep >= 3 ? "3.5" : "1.5"} 
-                          />
-                          <line 
-                            x1="40%" y1="80%" x2="75%" y2="70%" 
-                            stroke={shockStep >= 4 ? "#94a3b8" : "#64748b"} 
-                            strokeWidth="2" 
-                          />
-
-                          {/* Substations and Generators with dynamic color shifting */}
-                          <circle 
-                            cx="15%" cy="20%" r="9" 
-                            fill={shockStep >= 1 ? "#eab308" : "#0F4C81"} 
-                            className={shockStep >= 1 ? "animate-pulse" : ""} 
-                          />
-                          <circle 
-                            cx="50%" cy="25%" r="13" 
-                            fill={shockStep >= 4 ? "#f97316" : shockStep >= 2 ? "#fb923c" : "#0F4C81"} 
-                            className={shockStep >= 2 ? "animate-ping opacity-30" : ""} 
-                          />
-                          <circle 
-                            cx="50%" cy="25%" r="10" 
-                            fill={shockStep >= 4 ? "#f97316" : shockStep >= 2 ? "#eab308" : "#0b3e6b"} 
-                          />
-                          <circle 
-                            cx="40%" cy="80%" r="8" 
-                            fill={shockStep >= 4 ? "#475569" : shockStep >= 1 ? "#eab308" : "#0F4C81"} 
-                          />
-                          <circle 
-                            cx="85%" cy="40%" r="8.5" 
-                            fill={shockStep >= 2 ? "#f97316" : "#0F4C81"} 
-                          />
-                          <circle 
-                            cx="75%" cy="70%" r="7" 
-                            fill={shockStep >= 4 ? "#475569" : "#0F4C81"} 
-                          />
-                        </svg>
-                        {/* UI labeling indicators */}
-                        <div className="absolute top-4 left-6 text-[9px] font-mono select-none pointer-events-none">
-                          <span className="text-[#0F4C81] font-bold block">GEN HUB NW</span>
-                        </div>
-                        <div className="absolute top-[35%] left-[45%] text-[9px] font-mono select-none pointer-events-none text-center">
-                          <span className={`font-black block ${shockStep >= 4 ? "text-orange-600 animate-pulse font-extrabold text-[10px]" : shockStep >= 2 ? "text-amber-600" : "text-[#0F4C81]"}`}>
-                            S-14 JUNCTION {shockStep >= 4 ? "• DIVERGING FLOW" : shockStep >= 2 ? "• OVER BUFFER" : "• SECURE"}
-                          </span>
-                        </div>
-                        <div className="absolute bottom-[28%] left-[30%] text-[9px] font-mono select-none pointer-events-none">
-                          <span className="text-[#0F4C81] font-bold block">S-9 RADIAL</span>
-                        </div>
-                      </div>
-                    </div>
-   
-                    {/* Log stream outputs */}
-                    <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg h-36 overflow-y-auto select-text font-mono text-[10px] text-slate-700 space-y-1 scrollbar-none">
-                      {shockLogs.map((log, index) => (
-                        <p key={index} className="leading-relaxed border-b border-slate-200 pb-1 flex gap-1">
-                          <span className="text-[#0F4C81] font-bold flex-shrink-0">[{new Date().toLocaleTimeString()}]</span>
-                          <span>{log}</span>
-                        </p>
-                      ))}
-                      {shockSimulating && (
-                        <p className="text-amber-600 animate-pulse font-bold">
-                          → RECALCULATING STEADY-STATE POWER FLOW MATRICES...
-                        </p>
-                      )}
-                    </div>
-                  </div>
-   
-                  {/* Right Column: Stunning Live Telemetry Progression */}
-                  <div className="bg-slate-50 border border-slate-200 p-5 rounded-xl flex flex-col justify-between text-slate-800 shadow-sm relative">
-                    <div className="flex justify-between items-center pb-2 border-b border-slate-200 mb-4 select-none">
-                      <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#0F4C81]">
-                        LIVE CASCADE METRICS TELEMETRY
-                      </span>
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-black transition-colors ${
-                        shockStep === 0 
-                          ? "bg-emerald-50 text-emerald-800 border border-emerald-200" 
-                          : shockStep < 3 
-                            ? "bg-amber-50 text-amber-800 border border-amber-200 animate-pulse" 
-                            : "bg-orange-50 text-orange-800 border border-orange-200 animate-pulse"
-                      }`}>
-                        {shockStep === 0 && "HEALTHY STATE"}
-                        {shockStep === 1 && "MILD INTENSITY"}
-                        {shockStep === 2 && "WARNING LIMITS"}
-                        {shockStep === 3 && "SYSTEM CONGESTED"}
-                        {shockStep === 4 && "DYNAMIC ISOLATION COMPLETED"}
-                      </span>
-                    </div>
-
-                    <div className="space-y-4">
-                      {/* 1. Demand Growth */}
-                      <div>
-                        <div className="flex justify-between text-[10px] font-mono font-bold uppercase tracking-wider mb-1 text-slate-500">
-                          <span>Demand Growth</span>
-                          <span className="text-[#0F4C81] font-bold">{
-                            shockStep === 0 ? "35% Peak Baseline" :
-                            shockStep === 1 ? "54% EV Coincidence" :
-                            shockStep === 2 ? "72% Industrial Loop" :
-                            shockStep === 3 ? "89% Heavy Thermal Load" : "62% Smart Shaved"
-                          }</span>
-                        </div>
-                        <div className="w-full bg-slate-200/60 h-2 rounded-full overflow-hidden border border-slate-300">
-                          <div 
-                            className="h-full bg-[#0F4C81] transition-all duration-700" 
-                            style={{ width: shockStep === 0 ? "35%" : shockStep === 1 ? "54%" : shockStep === 2 ? "72%" : shockStep === 3 ? "89%" : "62%" }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      {/* 2. Renewable Expansion */}
-                      <div>
-                        <div className="flex justify-between text-[10px] font-mono font-bold uppercase tracking-wider mb-1 text-slate-500">
-                          <span>Renewable Expansion</span>
-                          <span className="text-emerald-700 font-bold">{
-                            shockStep === 0 ? "20% Active" :
-                            shockStep === 1 ? "45% Wind Inflow" :
-                            shockStep === 2 ? "70% Max Solar Peak" :
-                            shockStep === 3 ? "91% UNCONTROLLED FLOODING" : "75% Curtailed Target"
-                          }</span>
-                        </div>
-                        <div className="w-full bg-slate-200/60 h-2 rounded-full overflow-hidden border border-slate-300">
-                          <div 
-                            className="h-full bg-emerald-500 transition-all duration-700" 
-                            style={{ width: shockStep === 0 ? "20%" : shockStep === 1 ? "45%" : shockStep === 2 ? "70%" : shockStep === 3 ? "91%" : "75%" }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      {/* 3. Grid Congestion */}
-                      <div>
-                        <div className="flex justify-between text-[10px] font-mono font-bold uppercase tracking-wider mb-1 text-slate-500">
-                          <span>Grid Congestion</span>
-                          <span className={`${shockStep >= 3 ? "text-orange-600 font-extrabold animate-pulse" : shockStep >= 2 ? "text-amber-600" : "text-emerald-600"} font-bold`}>{
-                            shockStep === 0 ? "12% - Healthy Assets" :
-                            shockStep === 1 ? "28% - Safe Limits" :
-                            shockStep === 2 ? "65% - Warning threshold" :
-                            shockStep === 3 ? "98% - CONGESTED SUBSTATION" : "86% - Safe islanding fallback"
-                          }</span>
-                        </div>
-                        <div className="w-full bg-slate-200/60 h-2 rounded-full overflow-hidden border border-slate-300">
-                          <div 
-                            className={`h-full transition-all duration-700 ${shockStep >= 3 ? "bg-orange-500 animate-pulse" : shockStep >= 2 ? "bg-amber-500" : "bg-emerald-500"}`} 
-                            style={{ width: shockStep === 0 ? "12%" : shockStep === 1 ? "28%" : shockStep === 2 ? "65%" : shockStep === 3 ? "98%" : "86%" }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      {/* 4. Infrastructure Stress */}
-                      <div>
-                        <div className="flex justify-between text-[10px] font-mono font-bold uppercase tracking-wider mb-1 text-slate-500">
-                          <span>Infrastructure Stress</span>
-                          <span className={`${shockStep >= 3 ? "text-orange-600 font-extrabold animate-pulse" : shockStep >= 2 ? "text-amber-600" : "text-emerald-600"} font-bold`}>{
-                            shockStep === 0 ? "Safe Operational Range" :
-                            shockStep === 1 ? "Thermal Expansion Nominal" :
-                            shockStep === 2 ? "Warning: Component age fatigue multiplier" :
-                            shockStep === 3 ? "CRITICAL: THERMAL CASCADE OVERRUN" : "Stabilized with contingency storage"
-                          }</span>
-                        </div>
-                        <div className="w-full bg-slate-200/60 h-2 rounded-full overflow-hidden border border-slate-300">
-                          <div 
-                            className={`h-full transition-all duration-700 ${shockStep >= 3 ? "bg-orange-500 animate-pulse" : shockStep >= 2 ? "bg-amber-500" : "bg-emerald-500"}`} 
-                            style={{ width: shockStep === 0 ? "15%" : shockStep === 1 ? "30%" : shockStep === 2 ? "68%" : shockStep === 3 ? "98%" : "70%" }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      {/* 5. Carbon Reduction */}
-                      <div>
-                        <div className="flex justify-between text-[10px] font-mono font-bold uppercase tracking-wider mb-1 text-slate-500">
-                          <span>Carbon Reduction Impact</span>
-                          <span className="text-emerald-600 font-bold">-{carbonReduction}% emissions offset achieved</span>
-                        </div>
-                        <div className="w-full bg-slate-200/60 h-2 rounded-full overflow-hidden border border-slate-300">
-                          <div 
-                            className="h-full bg-emerald-600 transition-all duration-700" 
-                            style={{ width: `${carbonReduction}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 pt-3.5 border-t border-slate-200 flex items-center justify-between text-[10px] select-none text-slate-500">
-                      <span className="font-bold">Visual Progression Corridor:</span>
-                      <div className="flex gap-2">
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-black ${shockStep <= 1 ? "bg-emerald-50 text-emerald-800 border border-emerald-200" : "opacity-30"}`}>HEALTHY ASSETS</span>
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-black ${shockStep === 2 ? "bg-amber-50 text-amber-800 border border-amber-200 animate-pulse" : "opacity-30"}`}>WARNING</span>
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-black ${shockStep >= 3 ? "bg-orange-50 text-orange-800 border border-orange-200 animate-pulse" : "opacity-30"}`}>SLATE STRESS</span>
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-
-              {/* Dynamic metrics updating live during future shock: Converted to Executive KPI cards */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-xs flex flex-col justify-between">
-                  <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest block font-mono">Demand Growth</span>
-                  <div>
-                    <span className="text-xl font-mono font-black text-[#0F4C81] block mt-2">
-                      {shockStep === 0 ? "+35%" : shockStep === 1 ? "+54%" : shockStep === 2 ? "+72%" : shockStep === 3 ? "+89%" : "+62%"}
-                    </span>
-                    <span className="text-[9.5px] font-semibold text-slate-555 block">Coincidence Peak Loading</span>
-                  </div>
-                </div>
-
-                <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-xs flex flex-col justify-between">
-                  <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest block font-mono">Renewable Expansion</span>
-                  <div>
-                    <span className="text-xl font-mono font-black text-emerald-600 block mt-2">
-                      {shockStep === 0 ? "+20%" : shockStep === 1 ? "+45%" : shockStep === 2 ? "+70%" : shockStep === 3 ? "+91%" : "+75%"}
-                    </span>
-                    <span className="text-[9.5px] font-semibold text-slate-555 block">Clean Source Penetration</span>
-                  </div>
-                </div>
-
-                <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-xs flex flex-col justify-between">
-                  <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest block font-mono">Grid Congestion Risk</span>
-                  <div>
-                    <span className={`text-xl font-mono font-black block mt-2 ${shockStep >= 3 ? "text-orange-600" : shockStep >= 2 ? "text-amber-600" : "text-emerald-600"}`}>
-                      {shockStep === 0 ? "12%" : shockStep === 1 ? "28%" : shockStep === 2 ? "65%" : shockStep === 3 ? "98%" : "86%"}
-                    </span>
-                    <span className="text-[9.5px] font-semibold text-slate-555 block">Substation Thermal Limits</span>
-                  </div>
-                </div>
-
-                <div className="bg-white border border-slate-200 p-4 rounded-xl shadow-xs flex flex-col justify-between">
-                  <span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest block font-mono">System Stability</span>
-                  <div>
-                    <span className={`text-xl font-mono font-black block mt-2 ${shockStep === 3 ? "text-amber-600" : "text-emerald-600"}`}>
-                      {shockStep === 0 ? "Healthy" : shockStep === 1 ? "Stable" : shockStep === 2 ? "Warning" : shockStep === 3 ? "Stressed" : "Secured"}
-                    </span>
-                    <span className="text-[9.5px] font-semibold text-slate-555 block">Operating Stability Margin</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <FutureShockTab
+              shockEv={shockEv}
+              setShockEv={setShockEv}
+              shockRenewable={shockRenewable}
+              setShockRenewable={setShockRenewable}
+              shockIndustrial={shockIndustrial}
+              setShockIndustrial={setShockIndustrial}
+              shockRetireFossil={shockRetireFossil}
+              setShockRetireFossil={setShockRetireFossil}
+              shockSimulating={shockSimulating}
+              shockStep={shockStep}
+              shockLogs={shockLogs}
+              projectedReliability={projectedReliability}
+              investmentReq={investmentReq}
+              renewableImpact={renewableImpact}
+              carbonReduction={carbonReduction}
+              handleStartShockSimulation={handleStartShockSimulation}
+              setShockStep={setShockStep}
+              setShockLogs={setShockLogs}
+              setProjectedReliability={setProjectedReliability}
+              setInvestmentReq={setInvestmentReq}
+            />
           )}
 
-          {/* ======================= TAB 3: STRATEGIC ROADMAP ======================= */}
           {activeTab === "ROADMAP" && (
-            <div className="space-y-6 relative z-10 transition-opacity duration-300">
-              
-              {/* Timeline selector tabs */}
-              <div className="bg-slate-100 border border-slate-200 rounded-lg p-1 flex gap-1 shadow-sm select-none">
-                <button 
-                  onClick={() => setActiveRoadmapPhase(2030)}
-                  className={`flex-1 py-2 text-[10px] uppercase font-black rounded-md cursor-pointer transition-all ${
-                    activeRoadmapPhase === 2030 
-                      ? "bg-[#0F4C81] text-white shadow" 
-                      : "text-slate-500 hover:bg-slate-200"
-                  }`}
-                >
-                  Phase 1: 2030
-                </button>
-                <button 
-                  onClick={() => setActiveRoadmapPhase(2040)}
-                  className={`flex-1 py-2 text-[10px] uppercase font-black rounded-md cursor-pointer transition-all ${
-                    activeRoadmapPhase === 2040 
-                      ? "bg-[#0F4C81] text-white shadow" 
-                      : "text-slate-500 hover:bg-slate-200"
-                  }`}
-                >
-                  Phase 2: 2040
-                </button>
-                <button 
-                  onClick={() => setActiveRoadmapPhase(2050)}
-                  className={`flex-1 py-2 text-[10px] uppercase font-black rounded-md cursor-pointer transition-all ${
-                    activeRoadmapPhase === 2050 
-                      ? "bg-[#0F4C81] text-white shadow" 
-                      : "text-slate-500 hover:bg-slate-200"
-                  }`}
-                >
-                  Phase 3: 2050
-                </button>
-              </div>
-
-              {/* Comprehensive details of selected phase */}
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs space-y-5 select-text">
-                <div className="flex justify-between items-start border-b border-slate-100 pb-3">
-                  <div>
-                    <span className="text-[9px] font-bold text-[#0F4C81] uppercase tracking-widest block">STRATEGIC PLANNING PORTFOLIO</span>
-                    <h3 className="text-lg font-black text-slate-900 mt-1 uppercase">Grid Modernization Plan - Phase {activeRoadmapPhase === 2030 ? "I" : activeRoadmapPhase === 2040 ? "II" : "III"} (Year {activeRoadmapPhase})</h3>
-                  </div>
-                  <div className="text-right min-w-[120px]">
-                    <span className="text-[8px] font-bold text-slate-400 block uppercase tracking-wide">ALLOCATED BUDGET</span>
-                    <span className="font-mono text-base font-black text-slate-800 block">
-                      {activeRoadmapPhase === 2030 ? "₹480 Cr" : activeRoadmapPhase === 2040 ? "₹1,200 Cr" : "₹3,100 Cr"}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Sub project list */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
-                    <div>
-                      <span className="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-widest">PROJECT DIRECTIVE</span>
-                      <h4 className="text-sm font-black text-[#0F4C81] mt-1">
-                        {activeRoadmapPhase === 2030 ? "Substation Digital Retrofit" : activeRoadmapPhase === 2040 ? "Offshore Boreas HVDC Link" : "Hydrogen Gas Turbine Swap"}
-                      </h4>
-                      <p className="text-[11.5px] text-slate-600 mt-1 leading-normal font-medium">
-                        {activeRoadmapPhase === 2030 
-                          ? "Install unified fiber telemetry nodes across all primary grid interfaces to avoid transient load shedding." 
-                          : activeRoadmapPhase === 2040 
-                            ? "Establish dual core undersea high-voltage pathways to deliver available wind output to capital infrastructure hubs." 
-                            : "Transition natural gas firing stations to liquid Organic Hydrogen reserves to sustain baseline zero-carbon firming capacity."}
-                      </p>
-                    </div>
-                    <span className="text-[10px] text-[#0F4C81] font-bold mt-3 block">Target: Reliable Sourcing</span>
-                  </div>
-
-                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
-                    <div>
-                      <span className="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-widest">PROJECT DIRECTIVE</span>
-                      <h4 className="text-sm font-black text-[#0F4C81] mt-1">
-                        {activeRoadmapPhase === 2030 ? "Metro Edge Mesh AMI Gateways" : activeRoadmapPhase === 2040 ? "Megapack Core Pacific Basin" : "LOHC Bulk Fuel Reservoir"}
-                      </h4>
-                      <p className="text-[11.5px] text-slate-600 mt-1 leading-normal font-medium">
-                        {activeRoadmapPhase === 2030 
-                          ? "Complete high-resolution smart feedback counters rollout across metropolitan distribution centers." 
-                          : activeRoadmapPhase === 2040 
-                            ? "Deploy 300MWh regional utility storage at secondary border zones to shave high vehicle charging peaks." 
-                            : "Build high-capacity subterranean hydrogen containment fields to hedge grid reserve index during long sunless winter cycles."}
-                      </p>
-                    </div>
-                    <span className="text-[10px] text-[#0F4C81] font-bold mt-3 block">Target: Capacity Buffers</span>
-                  </div>
-
-                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
-                    <div>
-                      <span className="text-[8px] font-mono font-bold text-slate-400 uppercase tracking-widest">PROJECT DIRECTIVE</span>
-                      <h4 className="text-sm font-black text-[#0F4C81] mt-1">
-                        {activeRoadmapPhase === 2030 ? "Commune Microgrid Loop A" : activeRoadmapPhase === 2040 ? "Industrial Zone Microgrid" : "Deep Sea Undersea Ties"}
-                      </h4>
-                      <p className="text-[11.5px] text-slate-600 mt-1 leading-normal font-medium">
-                        {activeRoadmapPhase === 2030 
-                          ? "Equip 12 remote mountain cooperatives with modular solar cells paired with automated line disconnectors." 
-                          : activeRoadmapPhase === 2040 
-                            ? "Form independent smart microgrids for heavy factories to decouple delicate processing sags from national lines." 
-                            : "Extend global inter-tie vectors to tap international green energy loops."}
-                      </p>
-                    </div>
-                    <span className="text-[10px] text-[#0F4C81] font-bold mt-3 block">Target: Outage Resilience</span>
-                  </div>
-                </div>
-
-                {/* Targets indices and risk assessments */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                  <div className="p-4 bg-amber-50/50 border border-amber-200 rounded-xl">
-                    <span className="text-[10px] font-bold text-amber-800 uppercase block tracking-wide">Risk Assessment / Stress Impediments</span>
-                    <p className="text-xs text-slate-700 mt-1.5 leading-relaxed font-semibold">
-                      {activeRoadmapPhase === 2030 
-                        ? "MODERATE. Main risk is material supply chain latency of fiber processors and local union contractor capacity constraints." 
-                        : activeRoadmapPhase === 2040 
-                          ? "HIGH. High wind penetration causes voltage and inertia droop stability sags, requiring synchronous compensator buffers." 
-                          : "SEVERE. Phase-out of traditional baseload steam turbines requires advanced grid-forming inverters and large-scale synthetic inertia systems."}
-                    </p>
-                  </div>
-
-                  <div className="p-4 bg-emerald-50/50 border border-emerald-200 rounded-xl space-y-2">
-                    <span className="text-[10px] font-bold text-emerald-800 uppercase block tracking-wide">Projected Impact Outcomes</span>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 font-semibold text-xs text-slate-800">
-                      <div className="flex justify-between">
-                        <span className="text-slate-450 font-normal">Expected reliability:</span>
-                        <span>{activeRoadmapPhase === 2030 ? "+12.4% SAIFI" : activeRoadmapPhase === 2040 ? "+22.5% SAIFI" : "+35.0% SAIFI"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-450 font-normal">Renewable share target:</span>
-                        <span>{activeRoadmapPhase === 2030 ? "35%" : activeRoadmapPhase === 2040 ? "70%" : "100% Zero-Carbon"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-450 font-normal">Electrification Coverage:</span>
-                        <span>{activeRoadmapPhase === 2030 ? "90%" : activeRoadmapPhase === 2040 ? "98%" : "100% universal"}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-slate-450 font-normal">Carbon Reduction:</span>
-                        <span>{activeRoadmapPhase === 2030 ? "-15%" : activeRoadmapPhase === 2040 ? "-55%" : "-98% Offset"}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <RoadmapTab
+              activeRoadmapPhase={activeRoadmapPhase}
+              setActiveRoadmapPhase={setActiveRoadmapPhase}
+            />
           )}
 
-          {/* ======================= TAB 4: WHAT-IF BRANCHING ======================= */}
           {activeTab === "BRANCHING" && (
-            <div className="space-y-6 relative z-10 transition-opacity duration-300">
-              {/* Visual branching layout map */}
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
-                <h3 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                  <span className="material-symbols-outlined text-purple-600 text-lg">split_scene</span>
-                  Interactive What-If Strategy Branches
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5 font-medium">
-                  Below is a logical visualization of diverging strategy pathways derived from baseline stress conditions. Add or compare branches dynamically.
-                </p>
-
-                {/* Branch Node Tree Visualization */}
-                <div className="mt-6 border-t border-slate-100 pt-6">
-                  <div className="flex flex-col md:flex-row gap-6 items-center">
-                    
-                    {/* Common Baseline Node Root */}
-                    <div className="w-full md:w-64 bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-4 text-center relative flex-shrink-0">
-                      <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-slate-400 text-white text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shadow-xs">
-                        Baseline Root
-                      </span>
-                      <span className="material-symbols-outlined text-slate-500 text-2xl mt-1">hub</span>
-                      <h4 className="text-xs font-black text-slate-700 uppercase mt-2">Active Stress Condition</h4>
-                      <p className="text-[10px] text-slate-500 mt-1 select-none leading-tight font-semibold">Extreme Thermal Heatwave Stress 2040 Profile</p>
-                      <div className="mt-3.5 pt-2.5 border-t border-slate-200 text-center font-mono text-[10px] font-bold text-rose-600 leading-none">
-                        Grid Stability: 75.8% (Danger)
-                      </div>
-                    </div>
-
-                    {/* Connecting Arrow for Tree Feel */}
-                    <div className="hidden md:flex flex-col items-center justify-center text-slate-300 select-none">
-                      <span className="material-symbols-outlined text-2xl animate-pulse">keyboard_double_arrow_right</span>
-                      <span className="text-[8px] font-bold uppercase tracking-wider text-purple-400">Branching paths</span>
-                    </div>
-
-                    {/* Branches Output Stack */}
-                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-                      {branches.map((br) => (
-                        <div key={br.id} className="bg-purple-50/10 hover:bg-purple-50/30 border border-purple-200 rounded-2xl p-4 transition-all relative flex flex-col justify-between shadow-xs hover:shadow-md hover:-translate-y-0.5">
-                          <span className="absolute top-4 right-4 text-[9px] font-mono text-purple-700 bg-purple-50 border border-purple-200 rounded px-1.5 py-0.5 font-bold uppercase">
-                            {br.mitigationStrategy}
-                          </span>
-
-                          <div>
-                            <span className="text-[8.5px] font-black text-purple-400 uppercase tracking-widest block font-mono">
-                              Diverged {br.timestamp}
-                            </span>
-                            <h4 className="text-xs font-black text-slate-800 mt-1 flex items-center gap-1.5">
-                              <span className="material-symbols-outlined text-purple-600 text-base">fork_right</span>
-                              {br.name || `Mitigated Path [v${br.id.slice(-3)}]`}
-                            </h4>
-                            <p className="text-[10.5px] text-slate-500 mt-1.5 leading-tight font-semibold">
-                              Applying <span className="text-purple-700 font-bold">{br.mitigationStrategy}</span> at <span className="font-mono text-purple-600 font-bold">{br.mitigationIntensity}%</span> capacity.
-                            </p>
-                          </div>
-
-                          {/* Calculations output list */}
-                          <div className="grid grid-cols-3 gap-1.5 mt-4 pt-3 border-t border-purple-100 font-mono text-[9.5px]">
-                            <div className="p-1 px-1.5 bg-white border border-purple-200 rounded text-center">
-                              <span className="text-[7.5px] font-bold text-slate-400 uppercase block tracking-tight leading-none mb-1">Stability</span>
-                              <span className="font-extrabold text-emerald-600 block">{br.projectedStability}%</span>
-                            </div>
-                            <div className="p-1 px-1.5 bg-white border border-purple-200 rounded text-center">
-                              <span className="text-[7.5px] font-bold text-slate-400 uppercase block tracking-tight leading-none mb-1">Avoided</span>
-                              <span className="font-extrabold text-blue-600 block">+{br.avoidedOutagesPct}%</span>
-                            </div>
-                            <div className="p-1 px-1.5 bg-white border border-purple-200 rounded text-center">
-                              <span className="text-[7.5px] font-bold text-slate-400 uppercase block tracking-tight leading-none mb-1">GDP Gain</span>
-                              <span className="font-extrabold text-purple-700 block">+{Math.round((br.regionalGdpMultiplier - 1) * 100)}%</span>
-                            </div>
-                          </div>
-
-                          {/* Extra details indicator */}
-                          <div className="mt-3 text-[10px] text-slate-500 border-t border-slate-100 pt-2.5 flex justify-between items-center select-none font-sans font-semibold">
-                            <span>Incremental Capex: <span className="font-bold text-slate-700">₹{br.extraCapex.toLocaleString()} Cr</span></span>
-                            <button 
-                              onClick={() => setBranches(branches.filter(item => item.id !== br.id))}
-                              className="text-rose-500 hover:text-rose-700 uppercase font-black text-[9px] cursor-pointer hover:underline"
-                            >
-                              delete node
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-
-              {/* Strategic comparison grid matrix */}
-              <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs">
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest block mb-4 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-sm">bar_chart</span>
-                  Comparative Analysis of Mitigated Branches
-                </h3>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Visual Comparative Charts */}
-                  <div className="lg:col-span-2 space-y-4">
-                    {/* Metric 1 Compare */}
-                    <div>
-                      <label className="text-[10px] font-extrabold uppercase tracking-widest text-[#0F4C81] mb-2 block">Projected Grid Stability Delta (Target: &gt;95%)</label>
-                      <div className="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                        {branches.map(br => (
-                          <div key={br.id} className="space-y-1">
-                            <div className="flex justify-between text-[10.5px] font-bold select-none">
-                              <span className="text-slate-600 truncate max-w-[200px] font-semibold">{br.name}</span>
-                              <span className="font-mono text-emerald-600 font-bold">{br.projectedStability}%</span>
-                            </div>
-                            <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                              <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${br.projectedStability}%` }}></div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Metric 2 Compare */}
-                    <div>
-                      <label className="text-[10px] font-extrabold uppercase tracking-widest text-[#0F4C81] mb-2 block">Avoided Outages Percentage Contribution</label>
-                      <div className="space-y-2 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                        {branches.map(br => (
-                          <div key={br.id} className="space-y-1">
-                            <div className="flex justify-between text-[10.5px] font-bold select-none">
-                              <span className="text-slate-600 truncate max-w-[200px] font-semibold">{br.name}</span>
-                              <span className="font-mono text-blue-600 font-bold">+{br.avoidedOutagesPct}%</span>
-                            </div>
-                            <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                              <div className="h-full bg-blue-500 rounded-full transition-all duration-500" style={{ width: `${br.avoidedOutagesPct}%` }}></div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Analytical summary feedback */}
-                  <div className="p-4 bg-purple-50/20 border border-purple-100 rounded-xl flex flex-col justify-between">
-                    <div className="space-y-2.5">
-                      <span className="text-[8px] font-black text-purple-600 tracking-widest uppercase block mb-1">
-                        Branch Advisor Report
-                      </span>
-                      <h4 className="text-xs font-black text-slate-800 uppercase flex items-center gap-1">
-                        <span className="material-symbols-outlined text-sm text-purple-600">verified</span>
-                        Optimal Divergent Trade-off
-                      </h4>
-                      <p className="text-[11.5px] text-slate-600 leading-normal font-semibold">
-                        Based on current comparative simulations, your branches explore divergent solutions. High mitigation intensity increases short-term capital payback horizons but secures optimal N-1 operating margins under critical climate strain.
-                      </p>
-                    </div>
-                    <div className="mt-4 pt-3 border-t border-purple-100 text-[10px] font-mono text-slate-500 uppercase leading-none font-bold">
-                      Heuristics optimized • Ledger Secure
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <BranchingTab
+              branches={branches}
+              setBranches={setBranches}
+            />
           )}
 
           {/* PROCEED TO PLANNING COUNCIL BRIDGE */}
@@ -1171,11 +469,10 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
         </div>
       </div>
 
-      {/* Scenario Parameters Sandbox Sidebar (Right Panel) */}
+      {/* Sidebar Inputs Panel */}
       <aside className="w-[360px] bg-white border-l border-slate-200 flex flex-col z-20 shadow-xs">
         
         {activeTab === "SANDBOX" ? (
-          // Sandbox Panel
           <>
             <div className="p-4 border-b border-slate-200 bg-slate-50">
               <h3 className="text-xs font-black uppercase text-[#0F4C81] tracking-wider">Scenario Inputs</h3>
@@ -1183,7 +480,6 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              
               <div className="bg-slate-50 p-4 border border-slate-200 rounded-xl shadow-xs space-y-2">
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-[9px] font-bold text-slate-400 tracking-wide uppercase">EV Adoption</span>
@@ -1227,22 +523,19 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
                   <span className="font-mono font-bold text-[#0F4C81]">{params.renewableTarget}%</span>
                 </div>
                 <div className="grid grid-cols-4 gap-1">
-                  {([40, 60, 80, 100] as const).map((tgt) => {
-                    const isSelected = params.renewableTarget === tgt;
-                    return (
-                      <button
-                        key={tgt}
-                        onClick={() => setParams({ ...params, renewableTarget: tgt })}
-                        className={`py-1 border rounded-lg text-[10px] font-bold tracking-wider transition-colors cursor-pointer ${
-                          isSelected
-                            ? "bg-[#0F4C81] text-white border-transparent"
-                            : "border-slate-200 text-slate-500 bg-transparent hover:bg-slate-100"
-                        }`}
-                      >
-                        {tgt}%
-                      </button>
-                    );
-                  })}
+                  {([40, 60, 80, 100] as const).map((tgt) => (
+                    <button
+                      key={tgt}
+                      onClick={() => setParams({ ...params, renewableTarget: tgt })}
+                      className={`py-1 border rounded-lg text-[10px] font-bold tracking-wider transition-colors cursor-pointer ${
+                        params.renewableTarget === tgt
+                          ? "bg-[#0F4C81] text-white border-transparent"
+                          : "border-slate-200 text-slate-500 bg-transparent hover:bg-slate-100"
+                      }`}
+                    >
+                      {tgt}%
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -1298,7 +591,6 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
             </div>
           </>
         ) : activeTab === "FUTURE_SHOCK" ? (
-          // Future Shock Parameters Panel: Styled as Scenario Inputs Planning Assumptions
           <>
             <div className="p-4 border-b border-slate-200 bg-slate-50">
               <h3 className="text-xs font-black uppercase text-[#0F4C81] tracking-wider">Scenario Inputs</h3>
@@ -1306,7 +598,6 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              
               <div className="bg-slate-50 p-4 border border-slate-200 rounded-xl shadow-xs space-y-2">
                 <div className="flex justify-between items-center text-xs">
                   <span className="text-[9px] font-bold text-slate-400 tracking-wide uppercase">EV Adoption</span>
@@ -1377,7 +668,7 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
               <button
                 disabled={shockSimulating}
                 onClick={handleStartShockSimulation}
-                className="w-full py-2.5 bg-[#0F4C81] hover:bg-[#0c3e6b] text-white font-bold rounded-lg flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-50 text-xs block text-center uppercase"
+                className="w-full py-2.5 bg-[#0F4C81] hover:bg-[#0c3e6b] text-white font-bold rounded-lg flex items-center justify-center gap-2 cursor-pointer shadow-md disabled:opacity-60 text-xs block text-center uppercase"
               >
                 <span className="material-symbols-outlined text-[17px]">warning</span>
                 {shockSimulating ? "Simulating Stress Test..." : "Generate Future Shock Analysis"}
@@ -1385,7 +676,6 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
             </div>
           </>
         ) : activeTab === "ROADMAP" ? (
-          // Roadmap Sidebar (Overview of total vision)
           <>
             <div className="p-4 border-b border-slate-200 bg-slate-50">
               <h3 className="text-xs font-black uppercase text-[#0F4C81] tracking-wider">Roadmap Strategy</h3>
@@ -1395,7 +685,7 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               <div className="bg-slate-50 p-4 border border-slate-200 rounded-xl shadow-xs space-y-3 select-text">
                 <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest block">ALIGNMENT OBJECTIVE</span>
-                <p className="text-xs font-semibold text-slate-700 leading-relaxed">
+                <p className="text-xs font-semibold text-slate-700 leading-relaxed font-sans">
                   Decarbonizing industrial and residential consumption vectors requires progressive opex transfers into green reserve assets.
                 </p>
               </div>
@@ -1404,29 +694,20 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
                 <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest block">MILESTONE PHASES</span>
                 
                 <div className="space-y-2.5 text-xs">
-                  <div 
-                    onClick={() => setActiveRoadmapPhase(2030)}
-                    className={`p-2.5 rounded-lg border cursor-pointer transition-all ${activeRoadmapPhase === 2030 ? "bg-[#cbdbf5]/50 border-blue-400 font-extrabold" : "border-slate-200 hover:bg-slate-100"}`}
-                  >
-                    <span className="font-bold text-slate-900 block">Phase I (2030): Retrofitting</span>
-                    <span className="text-[10px] text-slate-500 mt-0.5 block font-medium">Establish AMI digital telemetry mesh.</span>
-                  </div>
-
-                  <div 
-                    onClick={() => setActiveRoadmapPhase(2040)}
-                    className={`p-2.5 rounded-lg border cursor-pointer transition-all ${activeRoadmapPhase === 2040 ? "bg-[#cbdbf5]/50 border-blue-400 font-extrabold" : "border-slate-200 hover:bg-slate-100"}`}
-                  >
-                    <span className="font-bold text-slate-900 block">Phase II (2040): Integration</span>
-                    <span className="text-[10px] text-slate-500 mt-0.5 block font-medium">Deploy undersea wind interconnectors & batteries.</span>
-                  </div>
-
-                  <div 
-                    onClick={() => setActiveRoadmapPhase(2050)}
-                    className={`p-2.5 rounded-lg border cursor-pointer transition-all ${activeRoadmapPhase === 2050 ? "bg-[#cbdbf5]/50 border-blue-400 font-extrabold" : "border-slate-200 hover:bg-slate-100"}`}
-                  >
-                    <span className="font-bold text-slate-900 block">Phase III (2050): Autonomy</span>
-                    <span className="text-[10px] text-slate-500 mt-0.5 block font-medium">Universal hydrogen firing and smart grid autonomy.</span>
-                  </div>
+                  {([2030, 2040, 2050] as const).map((phase) => (
+                    <div 
+                      key={phase}
+                      onClick={() => setActiveRoadmapPhase(phase)}
+                      className={`p-2.5 rounded-lg border cursor-pointer transition-all ${activeRoadmapPhase === phase ? "bg-[#cbdbf5]/50 border-blue-400 font-extrabold" : "border-slate-200 hover:bg-slate-100"}`}
+                    >
+                      <span className="font-bold text-slate-900 block">Phase {phase === 2030 ? "I" : phase === 2040 ? "II" : "III"} ({phase})</span>
+                      <span className="text-[10px] text-slate-500 mt-0.5 block font-medium font-sans">
+                        {phase === 2030 && "Establish AMI digital telemetry mesh."}
+                        {phase === 2040 && "Deploy undersea wind interconnectors & batteries."}
+                        {phase === 2050 && "Universal hydrogen firing and smart grid autonomy."}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1436,7 +717,6 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
             </div>
           </>
         ) : (
-          // Branching Sidebar
           <>
             <div className="p-4 border-b border-slate-200 bg-slate-50">
               <h3 className="text-xs font-black uppercase text-[#0F4C81] tracking-wider">Branch Controller</h3>
@@ -1444,7 +724,6 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              
               <div className="bg-slate-50 p-3.5 border border-slate-200 rounded-xl shadow-xs space-y-1.5">
                 <label className="text-[9px] font-black text-slate-400 uppercase block tracking-wider font-mono">1. Branch Node Label</label>
                 <input 
@@ -1531,7 +810,6 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
                   className="w-full accent-purple-600 focus:outline-none cursor-pointer" 
                 />
               </div>
-
             </div>
 
             <div className="p-4 bg-white border-t border-slate-200">

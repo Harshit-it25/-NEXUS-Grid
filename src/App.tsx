@@ -1,19 +1,21 @@
 import React, { useState } from "react";
 import { Sidebar } from "./components/Sidebar";
 import { Topbar } from "./components/Topbar";
-import { ExecutiveCommandCenter } from "./components/ExecutiveCommandCenter";
-import { DigitalTwin } from "./components/DigitalTwin";
-import { GridDataHub } from "./components/GridDataHub";
-import { ScenarioLaboratory } from "./components/ScenarioLaboratory";
-import { PlanningCouncil } from "./components/PlanningCouncil";
-import { InvestmentPrioritization } from "./components/InvestmentPrioritization";
-import { CrisisLaboratory } from "./components/CrisisLaboratory";
-import { ReportingCenter } from "./components/ReportingCenter";
-import { DecisionTraceability } from "./components/DecisionTraceability";
-import { DemoStoryMode } from "./components/DemoStoryMode";
-import { ImpactAssessment } from "./components/ImpactAssessment";
 import { ActiveView } from "./types";
 import { usePlanningScope } from "./PlanningScopeContext";
+
+// Lazy loaded views
+const ExecutiveCommandCenter = React.lazy(() => import("./components/ExecutiveCommandCenter").then(m => ({ default: m.ExecutiveCommandCenter })));
+const DigitalTwin = React.lazy(() => import("./components/DigitalTwin").then(m => ({ default: m.DigitalTwin })));
+const GridDataHub = React.lazy(() => import("./components/GridDataHub").then(m => ({ default: m.GridDataHub })));
+const ScenarioLaboratory = React.lazy(() => import("./components/ScenarioLaboratory").then(m => ({ default: m.ScenarioLaboratory })));
+const PlanningCouncil = React.lazy(() => import("./components/PlanningCouncil").then(m => ({ default: m.PlanningCouncil })));
+const InvestmentPrioritization = React.lazy(() => import("./components/InvestmentPrioritization").then(m => ({ default: m.InvestmentPrioritization })));
+const CrisisLaboratory = React.lazy(() => import("./components/CrisisLaboratory").then(m => ({ default: m.CrisisLaboratory })));
+const ReportingCenter = React.lazy(() => import("./components/ReportingCenter").then(m => ({ default: m.ReportingCenter })));
+const DecisionTraceability = React.lazy(() => import("./components/DecisionTraceability").then(m => ({ default: m.DecisionTraceability })));
+const DemoStoryMode = React.lazy(() => import("./components/DemoStoryMode").then(m => ({ default: m.DemoStoryMode })));
+const ImpactAssessment = React.lazy(() => import("./components/ImpactAssessment").then(m => ({ default: m.ImpactAssessment })));
 
 export default function App() {
   // Default to the brand new EXECUTIVE_COMMAND_CENTER above all modules!
@@ -147,7 +149,16 @@ export default function App() {
 
         {/* Dynamic Display Panel */}
         <main className="flex-1 overflow-hidden">
-          {renderActiveView()}
+          <React.Suspense fallback={
+            <div className="flex-1 h-full flex items-center justify-center bg-[#F8FAFC]">
+              <div className="flex flex-col items-center gap-3">
+                <span className="w-8 h-8 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin"></span>
+                <span className="text-xs font-mono font-bold text-slate-500 uppercase tracking-widest animate-pulse">Loading View...</span>
+              </div>
+            </div>
+          }>
+            {renderActiveView()}
+          </React.Suspense>
         </main>
       </div>
     </div>

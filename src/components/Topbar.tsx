@@ -137,6 +137,7 @@ export const Topbar: React.FC<TopbarProps> = ({
             <button 
               onClick={() => setSearchQuery("")}
               id="clear-search-btn"
+              aria-label="Clear search query"
               className="absolute right-2 text-slate-400 hover:text-slate-600 text-xs"
             >
               ×
@@ -148,6 +149,7 @@ export const Topbar: React.FC<TopbarProps> = ({
         <button 
           id="notification-bell-btn" 
           onClick={() => alert("Strategic Operations Notifications:\n\n- Active Alert: Cyclone Risk Elevated (West Coast)\n- Warning: Transmission Congestion (Delhi Corridor)\n- Inflow Target: Bhadla Solar Zone peak recorded.")}
+          aria-label="View strategic notifications"
           className="relative p-1.5 rounded-full hover:bg-slate-50 transition-colors cursor-pointer"
         >
           <span className="material-symbols-outlined text-slate-500">notifications</span>
@@ -157,7 +159,15 @@ export const Topbar: React.FC<TopbarProps> = ({
         {/* Account Profile icon */}
         <div 
           id="account-profile-btn" 
+          role="button"
+          tabIndex={0}
+          aria-label="View account profile information"
           onClick={() => alert("Logged in as Chief Architect (NEXUS Utility Systems Design Division).\nRole: System Administrator\nAccess Level: Full Read/Write Writeback Ledger Control.")}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              alert("Logged in as Chief Architect (NEXUS Utility Systems Design Division).\nRole: System Administrator\nAccess Level: Full Read/Write Writeback Ledger Control.");
+            }
+          }}
           className="p-1.5 rounded-full hover:bg-slate-50 transition-colors cursor-pointer"
         >
           <span className="material-symbols-outlined text-[#0F4C81]">account_circle</span>

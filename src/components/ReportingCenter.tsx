@@ -1,8 +1,17 @@
 import React, { useState } from "react";
 import { INITIAL_REPORT_TEMPLATES, INITIAL_GENERATED_REPORTS, INITIAL_QUEUE_ITEMS } from "../data";
 import { ReportTemplate, GeneratedReport, QueueItem } from "../types";
+import { usePlanningScope } from "../PlanningScopeContext";
 
 export const ReportingCenter: React.FC = () => {
+  const {
+    scopeType,
+    selectedRegion,
+    selectedHorizon,
+    renewableTarget,
+    activeScenarioName,
+  } = usePlanningScope();
+
   const [templates] = useState<ReportTemplate[]>(INITIAL_REPORT_TEMPLATES);
   const [generatedReports, setGeneratedReports] = useState<GeneratedReport[]>(INITIAL_GENERATED_REPORTS);
   const [queue, setQueue] = useState<QueueItem[]>(INITIAL_QUEUE_ITEMS);
@@ -10,6 +19,43 @@ export const ReportingCenter: React.FC = () => {
   // Status flags for visual highlights
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // AI Briefing State
+  const [aiBriefing, setAiBriefing] = useState<string | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
+  const [isAiGenerated, setIsAiGenerated] = useState<boolean>(false);
+
+  const generateAiBriefing = async () => {
+    setIsAiLoading(true);
+    try {
+      const response = await fetch("/api/generate-narrative", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          region: scopeType === "Region" ? selectedRegion : undefined,
+          horizon: scopeType === "Horizon" ? selectedHorizon : undefined,
+          evAdoption: 40,
+          renewableTarget,
+          consensusScore: 85,
+        }),
+      });
+      const data = await response.json();
+      if (data && data.narrative) {
+        setAiBriefing(data.narrative);
+        setIsAiGenerated(!!data.isAiGenerated);
+        setToastMessage(data.isAiGenerated ? "AI Briefing synthesized successfully!" : "Static preview briefing generated.");
+        setTimeout(() => setToastMessage(null), 3000);
+      }
+    } catch (error) {
+      console.error("Failed to generate AI briefing:", error);
+      setToastMessage("Failed to connect to AI briefing server.");
+      setTimeout(() => setToastMessage(null), 3000);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
 
   const handleGenerateReport = (temp: ReportTemplate) => {
     setGeneratingId(temp.id);
@@ -69,6 +115,68 @@ export const ReportingCenter: React.FC = () => {
           </div>
         )}
 
+        {/* AI Briefing Generator Card */}
+        <div className="relative z-10 mb-6 bg-gradient-to-br from-indigo-900 to-slate-900 text-white rounded-xl p-5 shadow-lg border border-indigo-500/25">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-indigo-500/20 flex-shrink-0 flex items-center justify-center text-indigo-300 border border-indigo-400/20">
+                <span className="material-symbols-outlined font-bold text-xl">auto_awesome</span>
+              </div>
+              <div>
+                <h3 className="text-sm font-black uppercase tracking-wider text-indigo-200">AI Boardroom Executive Briefing</h3>
+                <p className="text-[11px] text-slate-300 mt-0.5">Generate real-time compliance summaries using the active scope and target variables.</p>
+              </div>
+            </div>
+            
+            <button
+              onClick={generateAiBriefing}
+              disabled={isAiLoading}
+              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all active:scale-[0.98] cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5 shadow-md border border-indigo-400/30"
+            >
+              <span className="material-symbols-outlined text-xs animate-pulse">auto_awesome</span>
+              {isAiLoading ? "Synthesizing Summary..." : "Generate AI Briefing"}
+            </button>
+          </div>
+
+          {isAiLoading ? (
+            <div className="bg-slate-950/40 border border-indigo-500/15 rounded-lg p-4 flex flex-col gap-2 animate-pulse">
+              <div className="h-3 bg-indigo-500/20 rounded w-3/4"></div>
+              <div className="h-3 bg-indigo-500/20 rounded w-5/6"></div>
+              <div className="h-3 bg-indigo-500/20 rounded w-1/2"></div>
+            </div>
+          ) : aiBriefing ? (
+            <div className="bg-slate-950/50 border border-indigo-500/20 rounded-lg p-4 relative overflow-hidden transition-all duration-300">
+              <div className="absolute top-2 right-2 flex gap-1.5">
+                <span className={`px-2 py-0.5 text-[8px] font-black tracking-widest rounded-full uppercase font-mono ${
+                  isAiGenerated ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                }`}>
+                  {isAiGenerated ? "✨ Gemini AI Generated" : "📋 Policy-Rule Fallback"}
+                </span>
+              </div>
+              <p className="text-xs leading-relaxed text-slate-100 italic pr-20">
+                "{aiBriefing}"
+              </p>
+              <div className="mt-3.5 pt-2.5 border-t border-indigo-500/10 flex justify-between items-center text-[9px] text-slate-400">
+                <span className="font-mono">Active Scenario: {activeScenarioName}</span>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(aiBriefing || "");
+                    setToastMessage("Briefing copied to clipboard!");
+                    setTimeout(() => setToastMessage(null), 3000);
+                  }}
+                  className="hover:text-white transition-colors uppercase font-bold tracking-wider cursor-pointer"
+                >
+                  Copy to Clipboard
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="border border-dashed border-indigo-500/20 rounded-lg p-6 text-center text-xs text-slate-400">
+              No briefing generated yet. Click "Generate AI Briefing" to synthesize a real-time compliance summary.
+            </div>
+          )}
+        </div>
+
         {/* Templates selector group */}
         <div className="relative z-10 mb-6">
           <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest px-1 mb-3.5 font-mono">Strategic Templates</h2>
@@ -98,7 +206,7 @@ export const ReportingCenter: React.FC = () => {
                   <div className="flex justify-between items-end mt-4 pt-3.5 border-t border-slate-100">
                     <div className="flex gap-1.5 flex-wrap">
                       {temp.tags.map(t => (
-                        <span key={t} className="text-[8px] font-bold text-slate-450 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-wider font-mono">{t}</span>
+                        <span key={t} className="text-[8px] font-bold text-slate-455 bg-slate-100 px-1.5 py-0.5 rounded uppercase tracking-wider font-mono">{t}</span>
                       ))}
                     </div>
                     <button
