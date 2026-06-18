@@ -443,6 +443,9 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
     }
   }
 
+  // Toggle state for bottleneck HUD collapsing
+  const [bottleneckCollapsed, setBottleneckCollapsed] = useState<boolean>(false);
+
   const visibleAssets = assetList.filter((a) => {
     if (scopeType === "Region" && a.region !== selectedRegion) return false;
     if (a.type === "windFarms" && !layers.windFarms) return false;
@@ -459,49 +462,70 @@ export const DigitalTwin: React.FC<DigitalTwinProps> = ({ planningMode }) => {
       <div className="flex-1 relative bg-slate-100 overflow-hidden select-none border-r border-[#E2E8F0]">
         
         {/* Active Critical Bottleneck Overlay */}
-        <div className="absolute top-4 right-4 z-30 max-w-sm bg-[#881337] border-2 border-red-500 shadow-2xl rounded-xl p-5 text-white animate-pulse">
-          <div className="flex items-center gap-2 mb-2 pb-2 border-b border-rose-800">
-            <span className="material-symbols-outlined text-rose-300 font-extrabold animate-ping">error</span>
-            <span className="text-[11px] font-black uppercase tracking-widest text-[#FDA4AF]">
-              Active Critical Bottleneck
-            </span>
-          </div>
-          
-          <h3 className="text-sm font-black text-white flex items-center gap-1.5 uppercase tracking-tight">
-            Rajasthan Solar Cluster
-          </h3>
-          <p className="text-[10px] text-rose-200 mt-1 pb-3 leading-normal font-sans border-b border-rose-800/60 font-medium">
-            High-density solar output exceeds outbound transmission thermal limits during mid-day dispatch peaks.
-          </p>
-
-          <div className="grid grid-cols-2 gap-3 my-3">
-            <div className="bg-rose-950/50 p-2 rounded border border-rose-800">
-              <span className="text-[8.5px] font-mono text-rose-300 block uppercase font-bold">Generation</span>
-              <span className="text-base font-mono font-black text-white">2.4 GW</span>
+        {layers.renewableBottlenecks && (
+          <div className={`absolute top-4 right-4 z-30 max-w-sm bg-[#881337]/95 border-2 border-red-500 shadow-2xl rounded-xl text-white transition-all duration-300 pointer-events-auto ${
+            bottleneckCollapsed ? "p-3 w-64" : "p-5"
+          }`}>
+            <div className="flex items-center justify-between mb-2 pb-2 border-b border-rose-800">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-rose-300 font-extrabold animate-ping">error</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#FDA4AF]">
+                  Critical Bottleneck
+                </span>
+              </div>
+              <button 
+                onClick={() => setBottleneckCollapsed(!bottleneckCollapsed)}
+                className="material-symbols-outlined text-xs text-rose-300 hover:text-white cursor-pointer select-none bg-transparent border-none p-0 focus:outline-none"
+                aria-label={bottleneckCollapsed ? "Expand bottleneck details" : "Collapse bottleneck details"}
+              >
+                {bottleneckCollapsed ? "expand_more" : "expand_less"}
+              </button>
             </div>
-            <div className="bg-rose-950/50 p-2 rounded border border-rose-800">
-              <span className="text-[8.5px] font-mono text-rose-300 block uppercase font-bold">Transmission Cap.</span>
-              <span className="text-base font-mono font-black text-rose-400">1.8 GW</span>
-            </div>
-          </div>
+            
+            {!bottleneckCollapsed ? (
+              <>
+                <h3 className="text-xs font-black text-white flex items-center gap-1.5 uppercase tracking-tight">
+                  Rajasthan Solar Cluster
+                </h3>
+                <p className="text-[9.5px] text-rose-200 mt-1 pb-2 leading-normal font-sans border-b border-rose-800/60 font-medium">
+                  High-density solar output exceeds outbound transmission thermal limits during mid-day dispatch peaks.
+                </p>
 
-          <div className="p-2.5 bg-rose-900 border border-rose-700 rounded-lg flex justify-between items-center mb-3">
-            <span className="text-[9.5px] font-bold text-rose-200 uppercase font-mono">Current Curtailment:</span>
-            <span className="text-sm font-mono font-black text-white">600 MW</span>
-          </div>
+                <div className="grid grid-cols-2 gap-2.5 my-2.5">
+                  <div className="bg-rose-950/50 p-2 rounded border border-rose-800">
+                    <span className="text-[8px] font-mono text-rose-300 block uppercase font-bold">Generation</span>
+                    <span className="text-sm font-mono font-black text-white">2.4 GW</span>
+                  </div>
+                  <div className="bg-rose-950/50 p-2 rounded border border-rose-800">
+                    <span className="text-[8px] font-mono text-rose-300 block uppercase font-bold">Transmission Cap.</span>
+                    <span className="text-sm font-mono font-black text-rose-400">1.8 GW</span>
+                  </div>
+                </div>
 
-          <div className="bg-[#eff4ff] text-slate-900 border border-blue-200 p-3 rounded-lg space-y-1 select-text">
-            <span className="text-[8.5px] font-black text-indigo-700 tracking-wider uppercase block">
-              Recommended Upgrade Scheme
-            </span>
-            <span className="text-[11px] font-black text-slate-800 block">
-              Western Renewable Corridor
-            </span>
-            <p className="text-[9.5px] text-slate-550 leading-normal font-medium">
-              Expanding step-down dual HVDC bus link immediately unblocks curtailed capacity, yielding 12.5% ROI.
-            </p>
+                <div className="p-2 bg-rose-900 border border-rose-700 rounded-lg flex justify-between items-center mb-2.5">
+                  <span className="text-[9.5px] font-bold text-rose-200 uppercase font-mono">Current Curtailment:</span>
+                  <span className="text-xs font-mono font-black text-white">600 MW</span>
+                </div>
+
+                <div className="bg-[#eff4ff] text-slate-900 border border-blue-200 p-2.5 rounded-lg space-y-0.5 select-text">
+                  <span className="text-[8px] font-black text-indigo-700 tracking-wider uppercase block">
+                    Recommended Upgrade Scheme
+                  </span>
+                  <span className="text-[10.5px] font-black text-slate-800 block">
+                    Western Renewable Corridor
+                  </span>
+                  <p className="text-[9px] text-slate-550 leading-normal font-medium">
+                    Expanding step-down dual HVDC bus link immediately unblocks curtailed capacity.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="text-[10px] font-bold text-rose-200 truncate">
+                ⚠️ Rajasthan Solar Cluster: 600 MW Curtailment
+              </div>
+            )}
           </div>
-        </div>
+        )}
         
         {/* Subtab Dynamic Workspace Render */}
         {subTab === "ATLAS" ? (
