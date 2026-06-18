@@ -12,13 +12,10 @@ export const DecisionTraceability: React.FC = () => {
     storageGwh,
     climateRiskLevel,
     activeScenarioName,
+    consensusScore: contextConsensusScore,
   } = usePlanningScope();
 
-  const consensusScore = scopeType === "Region" 
-    ? (selectedRegion === "West" ? "90%" : selectedRegion === "North" ? "94%" : selectedRegion === "South" ? "95%" : selectedRegion === "East" ? "88%" : "96%")
-    : scopeType === "Horizon" 
-    ? (selectedHorizon === 2030 ? "89%" : selectedHorizon === 2040 ? "95%" : "98%")
-    : "95%";
+  const consensusScore = `${contextConsensusScore}%`;
 
   const reliabilityTarget = scopeType === "Horizon" 
     ? (selectedHorizon === 2030 ? "96.1% → 98.4%" : selectedHorizon === 2040 ? "96.1% → 99.2%" : "96.1% → 99.8%")

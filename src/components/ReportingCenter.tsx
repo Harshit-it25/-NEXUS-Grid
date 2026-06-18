@@ -10,6 +10,8 @@ export const ReportingCenter: React.FC = () => {
     selectedHorizon,
     renewableTarget,
     activeScenarioName,
+    evAdoption,
+    consensusScore,
   } = usePlanningScope();
 
   const [templates] = useState<ReportTemplate[]>(INITIAL_REPORT_TEMPLATES);
@@ -36,9 +38,9 @@ export const ReportingCenter: React.FC = () => {
         body: JSON.stringify({
           region: scopeType === "Region" ? selectedRegion : undefined,
           horizon: scopeType === "Horizon" ? selectedHorizon : undefined,
-          evAdoption: 40,
+          evAdoption,
           renewableTarget,
-          consensusScore: 85,
+          consensusScore,
         }),
       });
       const data = await response.json();

@@ -20,7 +20,7 @@ interface WhatIfBranch {
 }
 
 export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> = ({ onNavigate }) => {
-  const { scopeType, selectedRegion, selectedHorizon, renewableTarget } = usePlanningScope();
+  const { scopeType, selectedRegion, selectedHorizon, renewableTarget, evAdoption } = usePlanningScope();
 
   // Master mode switcher
   const [activeTab, setActiveTab] = useState<"SANDBOX" | "FUTURE_SHOCK" | "ROADMAP" | "BRANCHING">("FUTURE_SHOCK");
@@ -38,7 +38,7 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
       setParams((prev) => ({
         ...prev,
         renewableTarget: renewableTarget,
-        evAdoption: selectedHorizon === 2030 ? 40 : selectedHorizon === 2040 ? 65 : 85,
+        evAdoption: evAdoption,
         populationGrowth: selectedHorizon === 2030 ? 1.0 : selectedHorizon === 2040 ? 1.5 : 2.0,
       }));
       setShockEv(selectedHorizon === 2030 ? 50 : selectedHorizon === 2040 ? 70 : 90);
@@ -48,7 +48,7 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
       setParams((prev) => ({
         ...prev,
         renewableTarget: renewableTarget,
-        evAdoption: selectedRegion === "North" ? 50 : selectedRegion === "South" ? 45 : 35,
+        evAdoption: evAdoption,
         populationGrowth: 1.2
       }));
       setShockRenewable(renewableTarget);
@@ -58,14 +58,14 @@ export const ScenarioLaboratory: React.FC<{ onNavigate?: (view: any) => void }> 
       setParams((prev) => ({
         ...prev,
         renewableTarget: 70,
-        evAdoption: 40,
+        evAdoption: evAdoption,
         populationGrowth: 1.2
       }));
       setShockRenewable(75);
       setShockEv(65);
       setNewBaseScenario("National Heatwave Thermal Peak");
     }
-  }, [scopeType, selectedRegion, selectedHorizon, renewableTarget]);
+  }, [scopeType, selectedRegion, selectedHorizon, renewableTarget, evAdoption]);
 
   // --- Visual What-If Branching States ---
   const [branches, setBranches] = useState<WhatIfBranch[]>([

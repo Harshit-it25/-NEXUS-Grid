@@ -19,6 +19,8 @@ export interface PlanningContextValue {
   demandForecastMw: number;
   climateRiskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
   activeScenarioName: string;
+  evAdoption: number;
+  consensusScore: number;
 }
 
 const PlanningScopeContext = createContext<PlanningContextValue | undefined>(undefined);
@@ -47,6 +49,8 @@ export const PlanningScopeProvider: React.FC<PlanningScopeProviderProps> = ({ ch
   let demandForecastMw = 48000;
   let climateRiskLevel: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL" = "HIGH";
   let activeScenarioName = "India 2040 Renewable Transition";
+  let evAdoption = 40;
+  let consensusScore = 95;
 
   if (scopeType === "Horizon") {
     if (selectedHorizon === 2030) {
@@ -56,6 +60,8 @@ export const PlanningScopeProvider: React.FC<PlanningScopeProviderProps> = ({ ch
       demandForecastMw = 35000;
       climateRiskLevel = "MEDIUM";
       activeScenarioName = "India 2030 Fast Sourcing Push";
+      evAdoption = 40;
+      consensusScore = 89;
     } else if (selectedHorizon === 2040) {
       renewableTarget = 70;
       storageGwh = 9;
@@ -63,6 +69,8 @@ export const PlanningScopeProvider: React.FC<PlanningScopeProviderProps> = ({ ch
       demandForecastMw = 48000;
       climateRiskLevel = "HIGH";
       activeScenarioName = "India 2040 Renewable Transition";
+      evAdoption = 65;
+      consensusScore = 95;
     } else {
       // 2050
       renewableTarget = 85;
@@ -71,6 +79,8 @@ export const PlanningScopeProvider: React.FC<PlanningScopeProviderProps> = ({ ch
       demandForecastMw = 65000;
       climateRiskLevel = "CRITICAL";
       activeScenarioName = "India 2050 Zero-Carbon Grid";
+      evAdoption = 85;
+      consensusScore = 98;
     }
   } else if (scopeType === "Region") {
     // Region specific adjustments
@@ -81,24 +91,32 @@ export const PlanningScopeProvider: React.FC<PlanningScopeProviderProps> = ({ ch
       storageGwh = 5.2;
       demandForecastMw = 14500;
       climateRiskLevel = "HIGH"; // Solar thermal peak loading
+      evAdoption = 35;
+      consensusScore = 90;
     } else if (selectedRegion === "North") {
       renewableTarget = 62;
       budgetCr = 2400;
       storageGwh = 3.8;
       demandForecastMw = 16200;
       climateRiskLevel = "CRITICAL"; // Heavy weather surges loading
+      evAdoption = 50;
+      consensusScore = 94;
     } else if (selectedRegion === "South") {
       renewableTarget = 68;
       budgetCr = 2200;
       storageGwh = 4.5;
       demandForecastMw = 11800;
       climateRiskLevel = "MEDIUM";
+      evAdoption = 45;
+      consensusScore = 95;
     } else if (selectedRegion === "East") {
       renewableTarget = 45;
       budgetCr = 1800;
       storageGwh = 2.1;
       demandForecastMw = 9500;
       climateRiskLevel = "HIGH"; // Cyclone & flooding risks
+      evAdoption = 35;
+      consensusScore = 88;
     } else {
       // Central
       renewableTarget = 50;
@@ -106,6 +124,8 @@ export const PlanningScopeProvider: React.FC<PlanningScopeProviderProps> = ({ ch
       storageGwh = 2.5;
       demandForecastMw = 8000;
       climateRiskLevel = "LOW";
+      evAdoption = 35;
+      consensusScore = 96;
     }
   }
 
@@ -124,6 +144,8 @@ export const PlanningScopeProvider: React.FC<PlanningScopeProviderProps> = ({ ch
         demandForecastMw,
         climateRiskLevel,
         activeScenarioName,
+        evAdoption,
+        consensusScore,
       }}
     >
       {children}
